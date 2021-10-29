@@ -30,6 +30,24 @@ struct RSDPDescriptor20 {
 }__attribute__((packed));
 
 
+// RSTD table Header
+struct ACPISDTHeader {
+  char Signature[4];
+  uint32_t Length;
+  uint8_t Revision;
+  uint8_t Checksum;
+  char OEMID[6];
+  char OEMTableID[8];
+  uint32_t OEMRevision;
+  uint32_t CreatorID;
+  uint32_t CreatorRevision;
+};
+
+// struct RSDT {
+//   struct ACPISDTHeader h;
+//   uint32_t PointerToOtherSDT[(h.Length - sizeof(h)) / 4];
+// };
+
 // Look in a specified memory area for the RSDP signature
 struct RSDPDescriptor20* find_rsdp(uint32_t addr, uint32_t size){
   struct RSDPDescriptor20* ptr = (void*) 0;
@@ -49,10 +67,8 @@ struct RSDPDescriptor20* find_rsdp(uint32_t addr, uint32_t size){
 }
 
 
-// Check the RSDP table correctness //
+// Check the RSDP table correctness
 uint8_t check_rsdp(struct RSDPDescriptor20* rsdp){
-  cprintf("\tChecking for RSDP table integrity...\n");
-
   int checksum = 0;
   struct RSDPDescriptor* limit = &rsdp->firstPart + 1;
   for(uint8_t* i=(uint8_t*)&rsdp->firstPart; i<(uint8_t*)limit; ++i){
@@ -115,7 +131,8 @@ void* rsdp_search(void){
     panic("RSDP not found\n");
   }
 
-  // Check the RSDP table correctness //
+  // Check the RSDP table correctness
+  cprintf("\tChecking for RSDP table integrity...\n");
   if(check_rsdp(rsdp) != 0){
     panic("RSDP cannot be relied on!\n");
   }
@@ -126,9 +143,33 @@ void* rsdp_search(void){
 }
 
 
+
+// Check the RSDT table correctness
+uint8_t check_rsdt(struct ACPISDTHeader* rsdt){
+  uint8_t checksum = 0;
+  for(int i=0; i<rsdt->Length; ++i){
+    checksum += ((uint8_t*)rsdt)[i];.
+  }
+  
+  cprintf("RSDT checksum: %d\n", checksum % 0x100);
+  return (checksum == 0);
+}
+
+
 // Search for the RSDP table
 void rsdt_search(void){
   struct RSDPDescriptor20* rsdp = (struct RSDPDescriptor20*) rsdp_search();
+
+  uint32_t prsdt = rsdp->firstPart.RsdtAddress;
+  struct ACPISDTHeader* rsdt = P2V(prsdt);
+
+  cprintf("try %p -> %p, %p, %s\n", rsdp, prsdt, rsdt, rsdt->Signature);
+
+  // Check the RSDT table correctness
+  cprintf("\tChecking for RSDT table integrity...\n");
+  if(check_rsdt(rsdt) != 0){
+    panic("RSDT cannot be relied on!\n");
+  }
 
 
   return;
