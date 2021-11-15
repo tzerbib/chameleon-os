@@ -27,6 +27,7 @@ OBJS = \
 	uart.o\
 	vectors.o\
 	vm.o\
+	mystuff.o\
 
 # Cross-compiling (e.g., on Mac OS X)
 # TOOLPREFIX = i386-jos-elf
@@ -76,7 +77,7 @@ AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
-CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer
+CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O0 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 ASFLAGS = -m32 -gdwarf-2 -Wa,-divide
 # FreeBSD ld wants ``elf_i386_fbsd''
@@ -120,11 +121,9 @@ initcode: initcode.S
 	$(OBJCOPY) -S -O binary initcode.out initcode
 	$(OBJDUMP) -S initcode.o > initcode.asm
 
-mystuff: mystuff.c
-	$(CC) $(CFLAGS) -c $<
 
-kernel: $(OBJS) entry.o entryother initcode kernel.ld mystuff
-	$(LD) $(LDFLAGS) -T kernel.ld -o kernel entry.o mystuff.o $(OBJS) -b binary initcode entryother
+kernel: $(OBJS) entry.o entryother initcode kernel.ld
+	$(LD) $(LDFLAGS) -T kernel.ld -o kernel entry.o $(OBJS) -b binary initcode entryother
 	$(OBJDUMP) -S kernel > kernel.asm
 	$(OBJDUMP) -t kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > kernel.sym
 
@@ -220,9 +219,21 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 	then echo "-gdb tcp::$(GDBPORT)"; \
 	else echo "-s -p $(GDBPORT)"; fi)
 ifndef CPUS
-CPUS := 2
+CPUS := 3
 endif
-QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA)
+ifndef MEMORY
+MEMORY := 512
+endif
+
+QEMUOPTS  = -drive file=fs.img,index=1,media=disk,format=raw
+QEMUOPTS += -drive file=xv6.img,index=0,media=disk,format=raw
+QEMUOPTS += -enable-kvm
+QEMUOPTS += -smp $(CPUS) -m $(MEMORY)
+QEMUOPTS += -object memory-backend-ram,id=m0,size=256M
+QEMUOPTS += -object memory-backend-ram,id=m1,size=256M
+QEMUOPTS += -numa node,memdev=m0,cpus=0,nodeid=0
+QEMUOPTS += -numa node,memdev=m1,cpus=1-2,nodeid=1
+QEMUOPTS += $(QEMUEXTRA)
 
 qemu: fs.img xv6.img
 	$(QEMU) -serial mon:stdio $(QEMUOPTS)
@@ -237,7 +248,7 @@ qemu-nox: fs.img xv6.img
 	sed "s/localhost:1234/localhost:$(GDBPORT)/" < $^ > $@
 
 qemu-gdb: fs.img xv6.img .gdbinit
-	@echo "*** Now run 'gdb'." 1>&2
+	@echo "*** Now run 'gdb' on port $(GDBPORT)." 1>&2
 	$(QEMU) -serial mon:stdio $(QEMUOPTS) -S $(QEMUGDB)
 
 qemu-nox-gdb: fs.img xv6.img .gdbinit
@@ -285,5 +296,6 @@ tar:
 	mkdir -p /tmp/xv6
 	cp dist/* dist/.gdbinit.tmpl /tmp/xv6
 	(cd /tmp; tar cf - xv6) | gzip >xv6-rev10.tar.gz  # the next one will be 10 (9/17)
+	rm -rf /tmp/xv6
 
 .PHONY: dist-test dist
