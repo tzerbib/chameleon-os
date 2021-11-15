@@ -1,22 +1,24 @@
 #include "types.h"
 #include "defs.h"
 #include "memlayout.h"
+#include "mmu.h"
 
-typedef unsigned char uint8_t;
-typedef unsigned short uint16_t;
-typedef unsigned int uint32_t;
-typedef unsigned long long uint64_t;
+
+#define AVAILADDR ((void*)0x1000000)
+
+extern pte_t* kpgdir;                                   // defined by vm.c
+extern pte_t* walkpgdir(pte_t*, const void*, int);      // defined by vm.c
+extern int mappages(pde_t*, void*, uint, uint, int);    // defined by vm.c
 
 
 // RSDP table v1.0
-// __attribute__((packed)) --> no padding between fields
 struct RSDPDescriptor {
   char Signature[8];
   uint8_t Checksum;
   char OEMID[6];
   uint8_t Revision;
   uint32_t RsdtAddress;
-}__attribute__((packed));
+}__attribute__((packed)); // --> no padding between fields
 
 
 // RSDP table v2.0+
@@ -43,10 +45,35 @@ struct ACPISDTHeader {
   uint32_t CreatorRevision;
 };
 
-// struct RSDT {
-//   struct ACPISDTHeader h;
-//   uint32_t PointerToOtherSDT[(h.Length - sizeof(h)) / 4];
-// };
+
+// RSDT complete table 
+struct RSDT {
+  struct ACPISDTHeader h;
+  uint32_t PointerToOtherSDT[];
+};
+
+
+// SRAT table
+struct SRAT
+{
+    char signature[4];   // Contains "SRAT"
+    uint32_t length;     // Length of entire SRAT including entries
+    uint8_t  rev;        // 3
+    uint8_t  checksum;   // Entire table must sum to zero
+    uint8_t  OEMID[6];   // What do you think it is?
+    uint64_t OEMTableID; // For the SRAT it's the manufacturer model ID
+    uint32_t OEMRev;     // OEM revision for OEM Table ID
+    uint32_t creatorID;  // Vendor ID of the utility used to create the table
+    uint32_t creatorRev; // Blah blah
+ 
+    uint8_t reserved[12];
+} __attribute__((packed));
+
+
+
+////////////////////////////////////////////////////////////////////////////////
+// Functions
+////////////////////////////////////////////////////////////////////////////////
 
 // Look in a specified memory area for the RSDP signature
 struct RSDPDescriptor20* find_rsdp(uint32_t addr, uint32_t size){
@@ -104,10 +131,10 @@ void* rsdp_search(void){
   // First search zone: Extended Bios Data Area (EBDA)
   // Real mode segment (2 bytes) containing EBDA
   uint32_t pebda_segptr = 0x40E;
-  uint32_t* vebda_segptr = P2V(pebda_segptr);
+  uint16_t* vebda_segptr = P2V(pebda_segptr);
   
   // physical addr (extracted from segment)
-  uint16_t pebda = (*vebda_segptr << 8);
+  uint32_t pebda = (*vebda_segptr << 8);
 
   cprintf(
     "\tSearching into EBDA (pa: %x, va: %p)...\n",
@@ -137,40 +164,91 @@ void* rsdp_search(void){
     panic("RSDP cannot be relied on!\n");
   }
 
-  cprintf("\tReliable RSDP table found at virtual address %p\n", rsdp);
+  cprintf(
+    "\tReliable RSDP table found at virtual address %p (%p)\n",
+    rsdp, V2P(rsdp))
+  ;
 
   return (void*)rsdp;
 }
 
 
+// Convert a physical address to a virtual address for rsdt tables
+void* rsdt_p2v(uint32_t paddr){
+  uint32_t page = paddr & -PGSIZE;
+  return (void*)(AVAILADDR + (paddr - page));
+}
+
 
 // Check the RSDT table correctness
-uint8_t check_rsdt(struct ACPISDTHeader* rsdt){
+uint8_t check_rsdt(struct RSDT* rsdt){
   uint8_t checksum = 0;
-  for(int i=0; i<rsdt->Length; ++i){
-    checksum += ((uint8_t*)rsdt)[i];.
+  for(int i=0; i<rsdt->h.Length; ++i){
+    checksum += ((uint8_t*)rsdt)[i];
   }
   
-  cprintf("RSDT checksum: %d\n", checksum % 0x100);
   return (checksum == 0);
 }
 
 
+// Search for a table given the rsdt table and the looked for signature
+void* findRSDTSub(struct RSDT* rsdt, const char signature[4]){
+  int entries = (rsdt->h.Length - sizeof(struct ACPISDTHeader)) / 4;
+  struct ACPISDTHeader* curr;
+
+  for(int i=0; i<entries; i++){
+      curr = (struct ACPISDTHeader*) rsdt_p2v((uint32_t) rsdt->PointerToOtherSDT[i]);
+
+      if (!strncmp(curr->Signature, signature, 4))
+          return (void *) curr;
+  }
+
+  // No table found
+  return (void*)0;
+}
+
+
 // Search for the RSDP table
-void rsdt_search(void){
+void* rsdt_search(void){
   struct RSDPDescriptor20* rsdp = (struct RSDPDescriptor20*) rsdp_search();
 
-  uint32_t prsdt = rsdp->firstPart.RsdtAddress;
-  struct ACPISDTHeader* rsdt = P2V(prsdt);
+  uint32_t prsdt = 0;
+  // For ACPI v2.0 to 6.1
+  if(rsdp->firstPart.Revision){
+    prsdt = (uint32_t) rsdp->XsdtAddress;
+  }
+  else{
+    prsdt = rsdp->firstPart.RsdtAddress;
+  }
+  
+  uint32_t aligned_rsdt = prsdt & -PGSIZE;
+  mappages(kpgdir, AVAILADDR, 0x1000000, aligned_rsdt, PTE_P);
 
-  cprintf("try %p -> %p, %p, %s\n", rsdp, prsdt, rsdt, rsdt->Signature);
+  // Compute virtual address of rsdt by adding offset in page
+  struct RSDT* vrsdt = rsdt_p2v(prsdt);
 
   // Check the RSDT table correctness
   cprintf("\tChecking for RSDT table integrity...\n");
-  if(check_rsdt(rsdt) != 0){
+  if(!check_rsdt(vrsdt)){
     panic("RSDT cannot be relied on!\n");
   }
 
+  cprintf(
+    "\tReliable RSDT table found at virtual address %p (%p)\n",
+    vrsdt, prsdt
+  );
+
+  return vrsdt;
+}
+
+
+void srat_search(void){
+  struct RSDT* rsdt = (struct RSDT*) rsdt_search();
+
+  struct SRAT* srat = findRSDTSub(rsdt, "SRAT");
+  if(!srat){
+    panic("SRAT not found\n");
+  }
 
   return;
 }

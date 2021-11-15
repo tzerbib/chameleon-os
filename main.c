@@ -28,7 +28,7 @@ main(void)
   uartinit();      // serial port
   
   cprintf("\n\n");
-  rsdt_search();
+  srat_search();
   cprintf("\n\n");
 
   pinit();         // process table

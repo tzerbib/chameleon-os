@@ -192,4 +192,5 @@ void            clearpteu(pde_t *pgdir, char *uva);
 
 // mystuff.c
 void* rsdp_search(void);
-void rsdt_search(void);
+void* rsdt_search(void);
+void srat_search(void);
