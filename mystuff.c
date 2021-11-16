@@ -181,7 +181,8 @@ void* rsdt_p2v(uint32_t paddr){
 
 
 // Check the RSDT table correctness
-uint8_t check_rsdt(struct RSDT* rsdt){
+uint8_t check_rsdt(void* ptr){
+  struct RSDT* rsdt = (struct RSDT*) ptr;
   uint8_t checksum = 0;
   for(int i=0; i<rsdt->h.Length; ++i){
     checksum += ((uint8_t*)rsdt)[i];
@@ -242,6 +243,8 @@ void* rsdt_search(void){
 }
 
 
+
+
 void srat_search(void){
   struct RSDT* rsdt = (struct RSDT*) rsdt_search();
 
@@ -249,6 +252,20 @@ void srat_search(void){
   if(!srat){
     panic("SRAT not found\n");
   }
+
+  // Check the SRAT table correctness
+  cprintf("\tChecking for SRAT table integrity...\n");
+  if(!check_rsdt((void*) srat)){
+    panic("SRAT cannot be relied on!\n");
+  }
+
+  cprintf("\tReliable SRAT table found at virtual address %p\n", srat);
+
+  cprintf("\nSRAT: ");
+  for(int i=0; i<srat->length; ++i){
+    cprintf("%d ", ((uint8_t*)srat)[i]);
+  }
+  cprintf("\n");
 
   return;
 }
