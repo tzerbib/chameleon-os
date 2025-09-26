@@ -27,9 +27,11 @@ OBJS = \
 	uart.o\
 	vectors.o\
 	vm.o\
+	sysext.o\
+	extensions.o\
 
 # Cross-compiling (e.g., on Mac OS X)
-# TOOLPREFIX = i386-jos-elf
+TOOLPREFIX = i686-elf-
 
 # Using native tools (e.g., on X86 Linux)
 #TOOLPREFIX =
@@ -181,6 +183,7 @@ UPROGS=\
 	_usertests\
 	_wc\
 	_zombie\
+	_x_hello\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -253,6 +256,7 @@ EXTRA=\
 	printf.c umalloc.c\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
+	x_hello.c\
 
 dist:
 	rm -rf dist
