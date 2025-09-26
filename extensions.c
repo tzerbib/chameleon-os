@@ -91,21 +91,29 @@ ext_attach(struct extension* ext)
 }
 
 
-void
+static void
 trampoline(void)
 {
   cprintf("hello from trampoline!!\n");
+
   struct extension* e;
+
   acquire(&exttable.lock);
 
-  for (e = exttable.extensions; e < &exttable.extensions[NEXT]; e++) {
-    if (e->state == EXT_ATTACHED) {
-      cprintf("extension returns: %d\n", e->text());
-      break;
-    }
+  for(e = exttable.extensions; e < &exttable.extensions[NEXT]; ++e) {
+    if(e->state != EXT_ATTACHED)
+      continue;
+
+    // Release extension table lock during extension execution
+    release(&exttable.lock);
+
+    cprintf("extension returns: %d\n", e->text());
+
+    acquire(&exttable.lock);
   }
 
   release(&exttable.lock);
 
+  return;
 }
 
