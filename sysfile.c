@@ -69,6 +69,20 @@ sys_dup(void)
 int
 sys_read(void)
 {
+  asm volatile (
+    ".globl sys_read_nop_start\n"
+    "sys_read_nop_start:\n"
+    "nop\n"
+    "nop\n"
+    "nop\n"
+    "nop\n"
+    "nop\n"
+    ".globl sys_read_nop_end\n"
+    "sys_read_nop_end:\n"
+    : 
+    : 
+    :);
+
   struct file *f;
   int n;
   char *p;
