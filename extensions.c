@@ -91,7 +91,7 @@ ext_attach(struct extension* ext)
 }
 
 
-static void
+void
 trampoline(void)
 {
   cprintf("hello from trampoline!!\n");
