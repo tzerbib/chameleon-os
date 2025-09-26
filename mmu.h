@@ -90,10 +90,13 @@ struct segdesc {
 #define PGROUNDUP(sz)  (((sz)+PGSIZE-1) & ~(PGSIZE-1))
 #define PGROUNDDOWN(a) (((a)) & ~(PGSIZE-1))
 
+// TODO: The following are changed to all include the write bit (second bit) as 1
+// For use of extension (changing NOPs into `call trampoline`)
+// Need to figure out how to make pages writeable
 // Page table/directory entry flags.
-#define PTE_P           0x001   // Present
+#define PTE_P           0x003   // Present
 #define PTE_W           0x002   // Writeable
-#define PTE_U           0x004   // User
+#define PTE_U           0x006   // User
 #define PTE_PS          0x080   // Page Size
 
 // Address in page table or page directory entry
