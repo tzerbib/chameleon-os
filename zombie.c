@@ -8,7 +8,9 @@
 int
 main(void)
 {
-  if(fork() > 0)
-    sleep(5);  // Let child exit before parent.
+  // if(fork() > 0)
+  //   sleep(5);  // Let child exit before parent.
+  for (int i = 0; i < 1000; i++)
+    getpid();
   exit();
 }

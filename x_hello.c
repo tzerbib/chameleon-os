@@ -24,5 +24,6 @@ main(void)
   struct extension *e;
   extload(&f, &__stop_extension - &__start_extension, &e);
   extattach(e);
+  printf(1, "exiting user main\n");
   exit();
 }
