@@ -184,6 +184,8 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_x_hello\
+	_zombies\
+	_true\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -257,6 +259,8 @@ EXTRA=\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
 	x_hello.c\
+	zombies.c\
+	true.c\
 
 dist:
 	rm -rf dist
