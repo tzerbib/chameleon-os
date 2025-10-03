@@ -410,6 +410,20 @@ sys_chdir(void)
 int
 sys_exec(void)
 {
+  asm volatile (
+    ".globl sys_exec_nop_start\n"
+    "sys_exec_nop_start:\n"
+    "nop\n"
+    "nop\n"
+    "nop\n"
+    "nop\n"
+    "nop\n"
+    ".globl sys_exec_nop_end\n"
+    "sys_exec_nop_end:\n"
+    : 
+    : 
+    :);
+
   char *path, *argv[MAXARG];
   int i;
   uint uargv, uarg;

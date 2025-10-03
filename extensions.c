@@ -56,8 +56,9 @@ ext_attach(struct extension* ext)
 {
   cprintf("hello from ext_attach!\n");
 
-  extern unsigned char sys_read_nop_start;
-  extern unsigned char sys_read_nop_end;
+  // Change labels here to attach to a different syscall
+  extern unsigned char sys_exec_nop_start;
+  extern unsigned char sys_exec_nop_end;
   extern unsigned char trampoline_call_start;
   extern unsigned char trampoline_call_end;
 
@@ -76,14 +77,14 @@ ext_attach(struct extension* ext)
     :);
 
   // Write call trampoline instruction to replace nops
-  memmove(&sys_read_nop_start, &trampoline_call_start, &trampoline_call_end - &trampoline_call_start);
+  memmove(&sys_exec_nop_start, &trampoline_call_start, &trampoline_call_end - &trampoline_call_start);
 
   // Recalculate the relative address of the trampoline function
-  int difference = &trampoline_call_end - &sys_read_nop_end;
+  int difference = &trampoline_call_end - &sys_exec_nop_end;
   int offset;
-  memmove(&offset, &sys_read_nop_start + 1, sizeof(offset));
+  memmove(&offset, &sys_exec_nop_start + 1, sizeof(offset));
   offset += difference;
-  memmove(&sys_read_nop_start + 1, &offset, sizeof(offset));
+  memmove(&sys_exec_nop_start + 1, &offset, sizeof(offset));
 
   ext->state = EXT_ATTACHED;
   
@@ -94,7 +95,7 @@ ext_attach(struct extension* ext)
 void
 trampoline(void)
 {
-  cprintf("hello from trampoline!!\n");
+  // cprintf("hello from trampoline!!\n");
 
   struct extension* e;
 
@@ -107,7 +108,8 @@ trampoline(void)
     // Release extension table lock during extension execution
     release(&exttable.lock);
 
-    cprintf("extension returns: %d\n", e->text());
+    // cprintf("extension returns: %d\n", e->text());
+    e->text();
 
     acquire(&exttable.lock);
   }

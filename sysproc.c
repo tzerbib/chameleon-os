@@ -39,6 +39,20 @@ sys_kill(void)
 int
 sys_getpid(void)
 {
+  asm volatile (
+    ".globl sys_getpid_nop_start\n"
+    "sys_getpid_nop_start:\n"
+    "nop\n"
+    "nop\n"
+    "nop\n"
+    "nop\n"
+    "nop\n"
+    ".globl sys_getpid_nop_end\n"
+    "sys_getpid_nop_end:\n"
+    : 
+    : 
+    :
+  );
   return myproc()->pid;
 }
 
