@@ -22,6 +22,9 @@ void            cprintf(char*, ...);
 void            consoleintr(int(*)(void));
 void            panic(char*) __attribute__((noreturn));
 
+// elf.c
+int             kload_elf(char*, char*, void**);
+
 // exec.c
 int             exec(char*, char**);
 
