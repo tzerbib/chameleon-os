@@ -12,8 +12,9 @@
 int argfn(int n, void*(**fn)(void)) {
   int i;
  
-  if(argint(n, &i) < 0)
+  if(argint(n, &i) < 0) {
     return -1;
+  }
   *fn = (void*(*)(void))i;
   return 0;
 }
@@ -23,8 +24,9 @@ int argfn(int n, void*(**fn)(void)) {
 int argkptr(int n, void** pp) {
   int i;
  
-  if(argint(n, &i) < 0)
+  if(argint(n, &i) < 0) {
     return -1;
+  }
   *pp = (void**)i;
   return 0;
 }
@@ -42,17 +44,30 @@ int sys_extload(void) {
 
   *r = ext_load(fn, n);
   return 0;
-};
+}
 
 int sys_extattach(void) {
   cprintf("hello from sys_extattach!\n");
   struct extension* e;
-
+  
   if (argkptr(0, (void**)&e) < 0) {
     return -1;
   }
 
   ext_attach(e);
+  
+  return 0;
+}
 
+int sys_extload_elf(void) {
+  cprintf("hello from sys_extload\n");
+  char* path;
+  struct extension** r;
+
+  if (argstr(0, &path) < 0 || argptr(1, (char**)&r, sizeof(r)) < 0) {
+    return -1;
+  }
+
+  *r = ext_load_elf(path);
   return 0;
 }

@@ -17,6 +17,42 @@ struct {
   struct extension extensions[NEXT];
 } exttable;
 
+struct extension* ext_load_elf(char* path) {
+  cprintf("hello from ext_load_elf!\n");
+
+  acquire(&exttable.lock);
+
+  struct extension* e;
+
+  // Look for an unused extension
+  for (e = exttable.extensions; e < &exttable.extensions[NEXT]; e++) {
+    if (e->state == EXT_UNUSED) {
+      goto found;
+    }
+  }
+  
+  release(&exttable.lock);
+  return (void*)0;
+  
+  // Initialize extension
+  found:
+  e->state = EXT_LOADED;
+  
+  release(&exttable.lock);
+ 
+  // TODO: this could be definitely optimized
+  char* page = kalloc();
+  uint path_len = strlen(path);
+  if (path_len < sizeof(e->name)) {
+    safestrcpy(e->name, path, sizeof(e->name));
+  } else {
+    safestrcpy(e->name, path + (path_len - sizeof(e->name) + 1), sizeof(e->name));
+  }
+
+  kload_elf(path, page, (void**)&e->text);
+
+  return e;
+}
 
 struct extension* 
 ext_load(void* (*fn)(void), int n) 

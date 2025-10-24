@@ -8,3 +8,4 @@ struct extension {
 
 struct extension* ext_load(void* (*fn)(void), int n);
 void ext_attach(struct extension* ext);
+struct extension* ext_load_elf(char* path);
