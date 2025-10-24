@@ -11,10 +11,5 @@ void kfree(char*v) {
 }
 
 void xputs(char * s) {
-  // char* p = kalloc();
-  
   ((typeof(xputs)*)((function_t*)XTABLE_ADDR)[2])(s);
-
-  ((typeof(xputs)*)((function_t*)XTABLE_ADDR)[2])("xputs\n");
-  // kfree(p);
 }
