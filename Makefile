@@ -147,7 +147,7 @@ vectors.S: vectors.pl
 
 ULIB = ulib.o usys.o printf.o umalloc.o
 
-_%: %.o $(ULIB)
+_%: %.o $(ULIB) xtable.h
 	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
 	$(OBJDUMP) -S $@ > $*.asm
 	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
@@ -197,7 +197,8 @@ clean:
 	*.o *.d *.asm *.sym vectors.S bootblock entryother \
 	initcode initcode.out kernel xv6.img fs.img kernelmemfs \
 	xv6memfs.img mkfs .gdbinit \
-	$(UPROGS)
+	$(UPROGS)\
+	*.ext xtable.h
 
 # make a printout
 FILES = $(shell grep -v '^\#' runoff.list)
@@ -292,3 +293,15 @@ tar:
 	(cd /tmp; tar cf - xv6) | gzip >xv6-rev10.tar.gz  # the next one will be 10 (9/17)
 
 .PHONY: dist-test dist
+
+%.ext: %.ext.o xlib.o
+	$(LD) $(LDFLAGS) -o $@ $^
+
+%.ext.o: %.ext.c
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+xlib.o: xlib.c xtable.h
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+xtable.h: kernel
+	./xtable.sh

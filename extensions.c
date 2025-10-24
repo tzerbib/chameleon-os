@@ -5,6 +5,13 @@
 #include "spinlock.h"
 #include "mmu.h"
 
+typedef void(*function_t)(void);
+function_t xtable[] = {
+  [0] = (function_t)kalloc,
+  [1] = (function_t)kfree,
+  [2] = (function_t)cprintf,
+};
+
 struct {
   struct spinlock lock;
   struct extension extensions[NEXT];
