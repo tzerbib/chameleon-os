@@ -14,3 +14,7 @@ bootother
 bootother.out
 parport.out
 fmt
+
+libext
+.clangd
+.DS_Store
