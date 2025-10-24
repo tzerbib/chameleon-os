@@ -29,6 +29,7 @@ OBJS = \
 	vm.o\
 	sysext.o\
 	extensions.o\
+	elf.o\
 
 # Cross-compiling (e.g., on Mac OS X)
 TOOLPREFIX = i686-elf-
@@ -78,7 +79,7 @@ AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
-CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -Wno-array-bounds
+CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -Wno-array-bounds -Wno-stringop-overflow
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 ASFLAGS = -m32 -gdwarf-2 -Wa,-divide
 # FreeBSD ld wants ``elf_i386_fbsd''
@@ -184,8 +185,10 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_x_hello\
+	_x_hello_elf\
 	_zombies\
 	_true\
+	x.ext\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -260,6 +263,7 @@ EXTRA=\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
 	x_hello.c\
+	x_hello_elf.c\
 	zombies.c\
 	true.c\
 
@@ -295,10 +299,10 @@ tar:
 .PHONY: dist-test dist
 
 %.ext: %.ext.o xlib.o
-	$(LD) $(LDFLAGS) -o $@ $^
+	$(LD) $(LDFLAGS) -pie -e main -o $@ $^
 
 %.ext.o: %.ext.c
-	$(CC) $(CFLAGS) -c -o $@ $<
+	$(CC) $(CFLAGS) -fPIC -c -o $@ $<
 
 xlib.o: xlib.c xtable.h
 	$(CC) $(CFLAGS) -c -o $@ $<
