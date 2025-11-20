@@ -8,6 +8,7 @@
 #include "elf.h"
 
 extern char data[];  // defined by kernel.ld
+extern char end[]; // defined by kernel.ld
 pde_t *kpgdir;  // for use in scheduler()
 
 // Set up CPU's kernel segment descriptors.
@@ -110,7 +111,9 @@ static struct kmap {
 } kmap[] = {
  { (void*)KERNBASE, 0,             EXTMEM,    PTE_W}, // I/O space
  { (void*)KERNLINK, V2P(KERNLINK), V2P(data), 0},     // kern text+rodata
- { (void*)data,     V2P(data),     PHYSTOP,   PTE_W}, // kern data+memory
+ { (void*)data,     V2P(data),    V2P(end),   PTE_W }, // kern static writeable data
+ { (void*)end,     V2P(end), V2P(end + EXT_SIZE),   PTE_W}, // kern extension
+ { (void*)end + EXT_SIZE, V2P(end + EXT_SIZE), PHYSTOP,   PTE_W}, // kern free memory
  { (void*)DEVSPACE, DEVSPACE,      0,         PTE_W}, // more devices
 };
 
