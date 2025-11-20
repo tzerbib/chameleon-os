@@ -17,6 +17,9 @@ struct {
   struct extension extensions[NEXT];
 } exttable;
 
+extern char end[];
+char* n_ext = end;
+
 struct extension* ext_load_elf(char* path) {
   cprintf("hello from ext_load_elf!\n");
 
@@ -40,16 +43,16 @@ struct extension* ext_load_elf(char* path) {
   
   release(&exttable.lock);
  
-  // TODO: this could be definitely optimized
-  char* page = kalloc();
   uint path_len = strlen(path);
   if (path_len < sizeof(e->name)) {
     safestrcpy(e->name, path, sizeof(e->name));
   } else {
     safestrcpy(e->name, path + (path_len - sizeof(e->name) + 1), sizeof(e->name));
   }
-
-  kload_elf(path, page, (void**)&e->text);
+  
+  cprintf("before load elf\n");
+  // This call updates n_ext
+  kload_elf(path, &n_ext, (void**)&e->entry);
 
   return e;
 }
@@ -86,7 +89,7 @@ ext_load(void* (*fn)(void), int n)
   // TODO: this could be definitely optimized
   char* page = kalloc();
   memmove(page, fn, n);
-  e->text = (void*(*)(void)) page;
+  e->entry = (void*(*)(void)) page;
   
   safestrcpy(e->name, "read_ext", sizeof(e->name)); // Random hardcoded name for now
   
@@ -152,7 +155,7 @@ trampoline(void)
     release(&exttable.lock);
 
     // cprintf("extension returns: %d\n", e->text());
-    e->text();
+    e->entry();
 
     acquire(&exttable.lock);
   }
