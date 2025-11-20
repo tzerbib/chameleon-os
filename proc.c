@@ -112,6 +112,9 @@ found:
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
 
+  // TODO: this needs to be updated for namespaces
+  p->ns = (void *)0x0;
+
   return p;
 }
 
@@ -138,6 +141,9 @@ userinit(void)
   p->tf->eflags = FL_IF;
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
+
+  // TODO: this needs to be updated for namespaces
+  p->ns = (void *)0x0;
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");

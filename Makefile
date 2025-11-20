@@ -30,6 +30,7 @@ OBJS = \
 	sysext.o\
 	extensions.o\
 	elf.o\
+	namespace.o\
 
 # Cross-compiling (e.g., on Mac OS X)
 TOOLPREFIX = i686-elf-
