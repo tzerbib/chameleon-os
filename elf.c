@@ -49,7 +49,7 @@ int kload_elf(char* path, char** mem, void** entry) {
 
   cprintf("now have %d pages allocated\n", (prog_end - prog_start) / PGSIZE);
 
-  uint rel_offset;
+  uint rel_offset = 0;
   uint rel_count = 0;
   
   for(i=0, off=elf.phoff; i<elf.phnum; i++, off+=sizeof(ph)) {
