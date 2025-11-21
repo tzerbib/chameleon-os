@@ -60,6 +60,7 @@ struct namespace * create_ns() {
 
 // Gets the ID of the namespace. Assumes ns is a valid namespace.
 int get_nsid(struct namespace *ns) {
+	cprintf("getting ns %p\n", ns);
 	struct namespace *start = namespace_table.namespaces;
 	return ns - start;
 }
@@ -137,6 +138,7 @@ int remove_from_ns(struct namespace *ns, void *ptr) {
 	struct ns_object *end = &ns->namespaced_objects[N_NS_OBJ];
 	for (; ns_obj < end; ++ns_obj) {
 		if (ns_obj->pointer == ptr) {
+			cprintf("Removing obj from ns %p\n", ns);
 			ns_obj->kind = NONE;
 			release(&ns->lock);
 			return 0;
@@ -163,6 +165,7 @@ int attach_proc_to_ns(struct namespace *ns, struct proc *proc) {
 
 	for (; ns_obj < end; ++ns_obj) {
 		if (ns_obj->kind == NONE) {
+			cprintf("Attaching to ns %p\n", ns);
 			ns_obj->pointer = proc;
 			ns_obj->kind = PROCESS;
 			proc->ns = ns;
@@ -182,15 +185,17 @@ int destroy_ns(struct namespace *ns) {
 
 	acquire(&ns->lock);
 	struct ns_object *ns_object = ns->namespaced_objects;
-	struct ns_object *end = &ns->namespaced_objects[N_NS];
+	struct ns_object *end = &ns->namespaced_objects[N_NS_OBJ];
 
 	// Cleanup only if there are no objects attached to this NS
 	for (; ns_object < end; ++ns_object) {
 		if (ns_object->kind != NONE) {
+			cprintf("Failed to destroy ns %p\n", ns);
 			release(&ns->lock);
 			return -1;
 		}
 	}
+	cprintf("Destroyed ns %p\n", ns);
 	ns->slot_state = AVAILABLE;
 	release(&ns->lock);
 	return 0;

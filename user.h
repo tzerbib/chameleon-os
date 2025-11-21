@@ -30,6 +30,7 @@ int extload_elf(char* p, struct extension**);
 int getnsid(void);
 int mkns(void);
 int chns(int);
+int rmns(int);
 
 // ulib.c
 int stat(const char*, struct stat*);

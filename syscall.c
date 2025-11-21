@@ -109,6 +109,7 @@ extern int sys_extload_elf(void);
 extern int sys_getnsid(void);
 extern int sys_mkns(void);
 extern int sys_chns(void);
+extern int sys_rmns(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork] = sys_fork,
@@ -138,6 +139,7 @@ static int (*syscalls[])(void) = {
 [SYS_getnsid] = sys_getnsid,
 [SYS_mkns] = sys_mkns,
 [SYS_chns] = sys_chns,
+[SYS_rmns] = sys_rmns,
 };
 
 void

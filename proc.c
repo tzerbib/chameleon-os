@@ -550,13 +550,14 @@ procdump(void)
 int proc_chns(struct proc *p, struct namespace *ns) {
 	acquire(&ptable.lock);
 
+	struct namespace *old_ns = p->ns;
 	// Try to attach first. If successful, proc's namespace field changed.
 	if (attach_proc_to_ns(ns, p) < 0) {
 		return -1;
 	}
 
 	// Then remove proc pointer from namespace objects
-	if (remove_from_ns(p->ns, p) < 0) {
+	if (remove_from_ns(old_ns, p) < 0) {
 		return -1;
 	}
 	release(&ptable.lock);

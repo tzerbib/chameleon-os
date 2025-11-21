@@ -37,7 +37,7 @@ OBJS = \
 TOOLPREFIX = i686-elf-
 
 # Using native tools (e.g., on X86 Linux)
-#TOOLPREFIX =
+TOOLPREFIX = i686-linux-gnu-
 
 # Try to infer the correct TOOLPREFIX if not set
 ifndef TOOLPREFIX
