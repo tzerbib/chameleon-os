@@ -32,9 +32,7 @@ struct namespace {
 	enum slot_state slot_state;
 };
 
-
 struct {
-	struct spinlock lock;
 	struct namespace namespaces[N_NS];
 } namespace_table;
 
@@ -66,9 +64,29 @@ int get_nsid(struct namespace *ns) {
 	return ns - start;
 }
 
+// Given an ID, gets a pointer to the namespace. This returns (void *)0x0 if id
+// is invalid since ID can come from a systemcall. ID is invalid if the
+// namespace is available or id < 0 or id > N_NS.
+struct namespace *get_ns(int id) {
+	if (id < 0 || id > N_NS) {
+		return (void *)0x0;
+	}
+
+	struct namespace *ns = &namespace_table.namespaces[id];
+	acquire(&ns->lock);
+	int slot_state = ns->slot_state;
+	release(&ns->lock);
+
+	if (slot_state == AVAILABLE) {
+		return (void *)0x0;
+	} else {
+		return &namespace_table.namespaces[id];
+	}
+}
+
 void initialize_namespace(struct namespace *ns) {
 	acquire(&ns->lock);
-	ns->slot_state = NONE;
+	ns->slot_state = AVAILABLE;
 	struct ns_object *ns_obj = ns->namespaced_objects;
 	struct ns_object *end = &ns->namespaced_objects[N_NS_OBJ];
 	for (; ns_obj < end; ++ns_obj) {
@@ -81,13 +99,11 @@ void initialize_namespace(struct namespace *ns) {
 int namespaceinit(void) {
 
 	// First initialize every namespace in the table
-	acquire(&namespace_table.lock);
 	struct namespace *ns = namespace_table.namespaces;
 	struct namespace *end = &namespace_table.namespaces[N_NS];
 	for (; ns < end; ++ns) {
 		initialize_namespace(ns);
 	}
-	release(&namespace_table.lock);
 
 	// Then mark the global namespace at 0
 	{
@@ -107,9 +123,8 @@ struct namespace *global_ns(void) {
 }
 
 // Removes the ptr from ns. Assumes ns is valid. Returns err if ns is AVAILABLE
-// (a state error) or the ptr is not in ns.
+// (a state error) or the ptr is not in ns. If error, no changes are made.
 int remove_from_ns(struct namespace *ns, void *ptr) {
-
 	acquire(&ns->lock);
 
 	if (ns->slot_state == AVAILABLE) {
@@ -133,9 +148,9 @@ int remove_from_ns(struct namespace *ns, void *ptr) {
 }
 
 // Attach a process to the namespace. Assumes ns is valid (e.g., from global_ns
-// or create_ns) and proc is valid;
+// or create_ns) and proc is valid. If successful, proc->ns is changed and proc
+// is added to ns. On failure, nothing is changed.
 int attach_proc_to_ns(struct namespace *ns, struct proc *proc) {
-
 	acquire(&ns->lock);
 
 	if (ns->slot_state == AVAILABLE) {

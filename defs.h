@@ -124,6 +124,7 @@ void            userinit(void);
 int             wait(void);
 void            wakeup(void*);
 void            yield(void);
+int             proc_chns(struct proc*, struct namespace*);
 
 // swtch.S
 void            swtch(struct context**, struct context*);
@@ -192,12 +193,13 @@ void            clearpteu(pde_t *pgdir, char *uva);
 
 // namespace.c
 int                 namespaceinit(void);
-struct namespace *  global_ns(void);
-struct namespace *  create_ns(void);
-int                 destroy_ns(struct namespace *ns);
-int                 attach_proc_to_ns(struct namespace *ns, struct proc *proc);
-int                 remove_from_ns(struct namespace *ns, void *ptr);
-int                 get_nsid(struct namespace *ns);
+struct namespace*   global_ns(void);
+struct namespace*   create_ns(void);
+int                 destroy_ns(struct namespace*);
+int                 attach_proc_to_ns(struct namespace*, struct proc*);
+int                 remove_from_ns(struct namespace*, void*);
+int                 get_nsid(struct namespace*);
+struct namespace*   get_ns(int id);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

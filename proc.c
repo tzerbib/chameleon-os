@@ -544,3 +544,21 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+// Change the namespace of the given process to the given namespace. Returns -1
+// on error and 0 on success
+int proc_chns(struct proc *p, struct namespace *ns) {
+	acquire(&ptable.lock);
+
+	// Try to attach first. If successful, proc's namespace field changed.
+	if (attach_proc_to_ns(ns, p) < 0) {
+		return -1;
+	}
+
+	// Then remove proc pointer from namespace objects
+	if (remove_from_ns(p->ns, p) < 0) {
+		return -1;
+	}
+	release(&ptable.lock);
+	return 0;
+}
