@@ -31,6 +31,7 @@ OBJS = \
 	extensions.o\
 	elf.o\
 	namespace.o\
+	sysns.o\
 
 # Cross-compiling (e.g., on Mac OS X)
 TOOLPREFIX = i686-elf-
@@ -187,6 +188,7 @@ UPROGS=\
 	_zombie\
 	_x_hello\
 	_x_hello_elf\
+	_ns_test\
 	_zombies\
 	_true\
 	x.ext\
@@ -266,6 +268,7 @@ EXTRA=\
 	x_hello.c\
 	x_hello_elf.c\
 	zombies.c\
+	ns_test.c\
 	true.c\
 
 dist:

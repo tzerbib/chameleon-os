@@ -23,3 +23,4 @@
 #define SYS_extload 22
 #define SYS_extattach 23
 #define SYS_extload_elf 24
+#define SYS_getnsid 25

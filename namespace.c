@@ -60,6 +60,12 @@ struct namespace * create_ns() {
 	}
 }
 
+// Gets the ID of the namespace. Assumes ns is a valid namespace.
+int get_nsid(struct namespace *ns) {
+	struct namespace *start = namespace_table.namespaces;
+	return ns - start;
+}
+
 void initialize_namespace(struct namespace *ns) {
 	acquire(&ns->lock);
 	ns->slot_state = NONE;
@@ -74,20 +80,16 @@ void initialize_namespace(struct namespace *ns) {
 // Must be called on OS init. initializes the namespace table
 int namespaceinit(void) {
 
+	// First initialize every namespace in the table
 	acquire(&namespace_table.lock);
-
 	struct namespace *ns = namespace_table.namespaces;
-	acquire(&ns->lock);
-	ns->slot_state = TAKEN;
-	release(&ns->lock);
-
 	struct namespace *end = &namespace_table.namespaces[N_NS];
 	for (; ns < end; ++ns) {
 		initialize_namespace(ns);
 	}
-
 	release(&namespace_table.lock);
 
+	// Then mark the global namespace at 0
 	{
 		struct namespace *ns = &namespace_table.namespaces[0];
 		acquire(&ns->lock);
@@ -99,7 +101,7 @@ int namespaceinit(void) {
 
 // Must be called after namespaceinit. Returns a pointer to the global
 // namespace, currently the first namespace in the namespace in the namespace
-// table.
+// table. See namespaceinit for initialization.
 struct namespace *global_ns(void) {
 	return namespace_table.namespaces;
 }

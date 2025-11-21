@@ -27,6 +27,7 @@ int uptime(void);
 int extload(void*(*)(void), int, struct extension**);
 int extattach(struct extension*);
 int extload_elf(char* p, struct extension**);
+int getnsid(void);
 
 // ulib.c
 int stat(const char*, struct stat*);
