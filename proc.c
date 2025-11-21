@@ -142,8 +142,9 @@ userinit(void)
   p->tf->esp = PGSIZE;
   p->tf->eip = 0;  // beginning of initcode.S
 
-  // TODO: this needs to be updated for namespaces
-  p->ns = (void *)0x0;
+  // Attach the first process to the global namespace
+  struct namespace *ns = global_ns();
+  attach_proc_to_ns(ns, p);
 
   safestrcpy(p->name, "initcode", sizeof(p->name));
   p->cwd = namei("/");
@@ -193,6 +194,11 @@ fork(void)
   // Allocate process.
   if((np = allocproc()) == 0){
     return -1;
+  }
+
+  if (attach_proc_to_ns(curproc->ns, np) < 0) {
+          // TODO: need to release np?
+          return -1;
   }
 
   // Copy process state from proc.
