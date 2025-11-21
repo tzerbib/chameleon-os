@@ -13,6 +13,39 @@ static inline char* next_page(char** mem) {
   return *mem += PGSIZE;
 }
 
+int read_relocation(struct inode *ip, struct proghdr* php, uint* rel_offset, uint* rel_count) {
+      Elf32_Dyn dyns[php->filesz / sizeof(Elf32_Dyn)];
+      if (readi(ip, (char*)&dyns, php->off, sizeof(dyns)) != sizeof(dyns)) {
+        return -1;
+      }
+
+      uint rel_entry_sz = 0;
+      uint rel_total_sz = 0;
+      for(Elf32_Dyn const* dyn = dyns; dyn->d_tag != ELF_DYN_TAG_NULL; dyn++) {
+        switch (dyn->d_tag) {
+        case ELF_DYN_TAG_REL:
+          *rel_offset = dyn->d_un.d_ptr;
+          cprintf("rel offset %d\n", rel_offset);
+          break;
+        case ELF_DYN_TAG_RELSZ:
+          rel_total_sz = dyn->d_un.d_val;
+          cprintf("rel total sz %d\n", rel_total_sz);
+          break;
+        case ELF_DYN_TAG_RELENT:
+          rel_entry_sz = dyn->d_un.d_val;
+          cprintf("rel entry sz %d\n", rel_entry_sz);
+          break;
+        default:
+          break;
+        }
+      }
+      if (rel_entry_sz == 0) {
+        return -1;
+      }
+      *rel_count = rel_total_sz / rel_entry_sz;
+      return 0;
+}
+
 // Caller is responsible for providing suitable memory through page
 // Assumes page != NULL
 // Fills page and writes entry point within it to *entry
@@ -61,35 +94,9 @@ int kload_elf(char* path, char** mem, void** entry) {
 
     // Read dynamic section and relocation entries
     if(ph.type == ELF_PROG_DYNAMIC) {
-      Elf32_Dyn dyns[ph.filesz / sizeof(Elf32_Dyn)];
-      if (readi(ip, (char*)&dyns, ph.off, sizeof(dyns)) != sizeof(dyns)) {
+      if (read_relocation(ip, &ph, &rel_offset, &rel_count) == -1) {
         goto bad_after_alloc;
       }
-
-      uint rel_entry_sz = 0;
-      uint rel_total_sz = 0;
-      for(Elf32_Dyn const* dyn = dyns; dyn->d_tag != ELF_DYN_TAG_NULL; dyn++) {
-        switch (dyn->d_tag) {
-        case ELF_DYN_TAG_REL:
-          rel_offset = dyn->d_un.d_ptr;
-          cprintf("rel offset %d\n", rel_offset);
-          break;
-        case ELF_DYN_TAG_RELSZ:
-          rel_total_sz = dyn->d_un.d_val;
-          cprintf("rel total sz %d\n", rel_total_sz);
-          break;
-        case ELF_DYN_TAG_RELENT:
-          rel_entry_sz = dyn->d_un.d_val;
-          cprintf("rel entry sz %d\n", rel_entry_sz);
-          break;
-        default:
-          break;
-        }
-      }
-      if (rel_entry_sz == 0) {
-        goto bad_after_alloc;
-      }
-      rel_count = rel_total_sz / rel_entry_sz;
       continue;
     }
 
