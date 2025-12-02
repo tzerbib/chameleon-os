@@ -1,36 +1,10 @@
 #include "types.h"
 #include "defs.h"
 #include "param.h"
-#include "spinlock.h"
 #include "namespace.h"
 #include "mmu.h"          // so that proc.h gets its requisite types and defs
 #include "proc.h"
-
-#define N_NS            16
-#define N_NS_OBJ        16
-
-enum slot_state {
-	AVAILABLE,
-	TAKEN,
-};
-
-enum ns_entry_kind {
-	EXTENSION,
-	PROCESS,
-	NONE,
-};
-
-struct ns_object {
-	void *pointer;
-	enum ns_entry_kind kind;
-};
-
-struct namespace {
-	struct spinlock lock;
-	// points to objects in the namespace
-	struct ns_object namespaced_objects[N_NS_OBJ];
-	enum slot_state slot_state;
-};
+#include "extensions.h"
 
 struct {
 	struct namespace namespaces[N_NS];
@@ -60,7 +34,7 @@ struct namespace * create_ns() {
 
 // Gets the ID of the namespace. Assumes ns is a valid namespace.
 int get_nsid(struct namespace *ns) {
-	cprintf("getting ns %p\n", ns);
+	cprintf("getting ns 0x%p\n", ns);
 	struct namespace *start = namespace_table.namespaces;
 	return ns - start;
 }
@@ -138,7 +112,7 @@ int remove_from_ns(struct namespace *ns, void *ptr) {
 	struct ns_object *end = &ns->namespaced_objects[N_NS_OBJ];
 	for (; ns_obj < end; ++ns_obj) {
 		if (ns_obj->pointer == ptr) {
-			cprintf("Removing obj from ns %p\n", ns);
+			cprintf("Removing obj from ns 0x%p\n", ns);
 			ns_obj->kind = NONE;
 			release(&ns->lock);
 			return 0;
@@ -149,15 +123,13 @@ int remove_from_ns(struct namespace *ns, void *ptr) {
 	return -1;
 }
 
-// Attach a process to the namespace. Assumes ns is valid (e.g., from global_ns
-// or create_ns) and proc is valid. If successful, proc->ns is changed and proc
-// is added to ns. On failure, nothing is changed.
-int attach_proc_to_ns(struct namespace *ns, struct proc *proc) {
+// Attach pointer to ns. Assumes ns is valid.
+// Caller of this function is responsible for changing states of what ptr is pointer to.
+int attach_ptr_to_ns(struct namespace *ns, void* ptr, enum ns_entry_kind kind) {
 	acquire(&ns->lock);
 
 	if (ns->slot_state == AVAILABLE) {
-		release(&ns->lock);
-		return -1;
+		goto bad;
 	}
 
 	struct ns_object *ns_obj = ns->namespaced_objects;
@@ -165,19 +137,46 @@ int attach_proc_to_ns(struct namespace *ns, struct proc *proc) {
 
 	for (; ns_obj < end; ++ns_obj) {
 		if (ns_obj->kind == NONE) {
-			cprintf("Attaching to ns %p\n", ns);
-			ns_obj->pointer = proc;
-			ns_obj->kind = PROCESS;
-			proc->ns = ns;
+			cprintf("Attaching to ns 0x%p\n", ns);
+			ns_obj->pointer = ptr;
+			ns_obj->kind = kind;
 			release(&ns->lock);
 			return 0;
 		}
 	}
 
-	// Did not find an available slot
+	bad:
 	release(&ns->lock);
 	return -1;
 }
+
+// Attach a process to the namespace. Assumes ns is valid (e.g., from global_ns
+// or create_ns) and proc is valid. If successful, proc->ns is changed and proc
+// is added to ns. On failure, nothing is changed.
+int attach_proc_to_ns(struct namespace *ns, struct proc *proc) {
+	if (attach_ptr_to_ns(ns, (void*)proc, PROCESS) == -1) {
+		return -1;
+	}
+
+	proc->ns = ns;
+	return 0;
+}
+
+// Attach extension to namespace. Calls attach_ptr_to_ns helper and updates 
+int attach_ext_to_ns(struct namespace* ns, struct extension* ext) {
+	if (ext->state == EXT_UNUSED) {
+		return -1;
+	}
+
+	if (attach_ptr_to_ns(ns, (void*)ext, EXTENSION) == -1) {
+		return -1;
+	}
+
+	ext->ns = ns;
+
+	return 0;
+}
+
 
 // Destroy the namespace ns. Assumes ns is valid. If ns has objects, will return
 // error and make no changes to the ns.
@@ -190,12 +189,12 @@ int destroy_ns(struct namespace *ns) {
 	// Cleanup only if there are no objects attached to this NS
 	for (; ns_object < end; ++ns_object) {
 		if (ns_object->kind != NONE) {
-			cprintf("Failed to destroy ns %p\n", ns);
+			cprintf("Failed to destroy ns 0x%p\n", ns);
 			release(&ns->lock);
 			return -1;
 		}
 	}
-	cprintf("Destroyed ns %p\n", ns);
+	cprintf("Destroyed ns 0x%p\n", ns);
 	ns->slot_state = AVAILABLE;
 	release(&ns->lock);
 	return 0;

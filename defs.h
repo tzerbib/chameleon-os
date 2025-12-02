@@ -10,6 +10,7 @@ struct sleeplock;
 struct stat;
 struct superblock;
 struct namespace;
+struct extension;
 
 // bio.c
 void            binit(void);
@@ -200,6 +201,7 @@ int                 attach_proc_to_ns(struct namespace*, struct proc*);
 int                 remove_from_ns(struct namespace*, void*);
 int                 get_nsid(struct namespace*);
 struct namespace*   get_ns(int id);
+int                 attach_ext_to_ns(struct namespace* ns, struct extension* ext);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))
