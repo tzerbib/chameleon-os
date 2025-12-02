@@ -60,7 +60,7 @@ int sys_extattach(void) {
 }
 
 int sys_extload_elf(void) {
-  cprintf("hello from sys_extload\n");
+  cprintf("hello from sys_extload_elf\n");
   char* path;
   struct extension** r;
 

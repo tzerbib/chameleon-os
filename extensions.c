@@ -2,8 +2,9 @@
 #include "types.h"
 #include "defs.h"
 #include "param.h"
-#include "spinlock.h"
 #include "mmu.h"
+#include "proc.h"
+#include "namespace.h"
 
 typedef void(*function_t)(void);
 function_t xtable[] = {
@@ -21,8 +22,6 @@ extern char end[];
 char* n_ext = end;
 
 struct extension* ext_load_elf(char* path) {
-  cprintf("hello from ext_load_elf!\n");
-
   acquire(&exttable.lock);
 
   struct extension* e;
@@ -50,18 +49,13 @@ struct extension* ext_load_elf(char* path) {
     safestrcpy(e->name, path + (path_len - sizeof(e->name) + 1), sizeof(e->name));
   }
   
-  cprintf("before load elf\n");
   // This call updates n_ext
   kload_elf(path, &n_ext, (void**)&e->entry);
 
   return e;
 }
 
-struct extension* 
-ext_load(void* (*fn)(void), int n) 
-{
-  cprintf("hello from ext_load!\n");
-  
+struct extension* ext_load(void* (*fn)(void), int n) {
   // Check if function size is bigger than a page
   if (n < 0 || n > PGSIZE) {
     return (void*)0;
@@ -97,9 +91,7 @@ ext_load(void* (*fn)(void), int n)
   return e;
 }
 
-void
-ext_attach(struct extension* ext)
-{
+void ext_attach(struct extension* ext) {
   cprintf("hello from ext_attach!\n");
 
   // Change labels here to attach to a different syscall
@@ -133,23 +125,33 @@ ext_attach(struct extension* ext)
   memmove(&sys_exec_nop_start + 1, &offset, sizeof(offset));
 
   ext->state = EXT_ATTACHED;
+  struct proc *currproc = myproc();
+  struct namespace *currns = currproc->ns;
+  ext->ns = currns;
+  attach_ext_to_ns(currns, ext);
   
   release(&exttable.lock);
 }
 
 
-void
-trampoline(void)
-{
+void trampoline(void) {
   // cprintf("hello from trampoline!!\n");
 
   struct extension* e;
 
+  struct proc *currproc = myproc();
+  struct namespace *currns = currproc->ns;
+
   acquire(&exttable.lock);
 
   for(e = exttable.extensions; e < &exttable.extensions[NEXT]; ++e) {
-    if(e->state != EXT_ATTACHED)
+    if(e->state != EXT_ATTACHED) {
       continue;
+    }
+
+    if (e->ns != currns) {
+      continue;
+    }
 
     // Release extension table lock during extension execution
     release(&exttable.lock);
@@ -161,7 +163,5 @@ trampoline(void)
   }
 
   release(&exttable.lock);
-
-  return;
 }
 
