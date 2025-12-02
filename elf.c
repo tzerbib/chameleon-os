@@ -25,15 +25,12 @@ int read_relocation(struct inode *ip, struct proghdr* php, uint* rel_offset, uin
         switch (dyn->d_tag) {
         case ELF_DYN_TAG_REL:
           *rel_offset = dyn->d_un.d_ptr;
-          cprintf("rel offset %d\n", rel_offset);
           break;
         case ELF_DYN_TAG_RELSZ:
           rel_total_sz = dyn->d_un.d_val;
-          cprintf("rel total sz %d\n", rel_total_sz);
           break;
         case ELF_DYN_TAG_RELENT:
           rel_entry_sz = dyn->d_un.d_val;
-          cprintf("rel entry sz %d\n", rel_entry_sz);
           break;
         default:
           break;
@@ -64,7 +61,6 @@ int kload_elf(char* path, char** mem, void** entry) {
     cprintf("kload_elf: fail\n");
     return -1;
   }
-  cprintf("locking inode on path %s\n", path);
   ilock(ip);
   
   // Check ELF header
@@ -75,22 +71,16 @@ int kload_elf(char* path, char** mem, void** entry) {
     goto bad;
   }
   
-  cprintf("checked elf header\n");
-
   char* prog_start = *mem;
   char const* prog_end = prog_start;
-
-  cprintf("now have %d pages allocated\n", (prog_end - prog_start) / PGSIZE);
 
   uint rel_offset = 0;
   uint rel_count = 0;
   
   for(i=0, off=elf.phoff; i<elf.phnum; i++, off+=sizeof(ph)) {
-    cprintf("in loop\n");
     if(readi(ip, (char*)&ph, off, sizeof(ph)) != sizeof(ph)) {
       goto bad_after_alloc;
     }
-    cprintf("ph.type %d\n", ph.type);
 
     // Read dynamic section and relocation entries
     if(ph.type == ELF_PROG_DYNAMIC) {
@@ -105,7 +95,6 @@ int kload_elf(char* path, char** mem, void** entry) {
       continue;
     }
     
-    cprintf("got here\n");
     if(ph.memsz < ph.filesz) {
       goto bad_after_alloc;
     }
@@ -119,7 +108,6 @@ int kload_elf(char* path, char** mem, void** entry) {
     // First, allocate memory until the segment will fit
     while (ph.vaddr + ph.memsz >= (uint) (prog_end - prog_start)) {
       prog_end = next_page(mem);
-      cprintf("now have %d pages allocated\n", (prog_end - prog_start) / PGSIZE);
       if (prog_end < prog_start) {
         // TODO: another failure case is allocating too much
         // The current implementation does not know what "too much" means
@@ -139,14 +127,11 @@ int kload_elf(char* path, char** mem, void** entry) {
   Elf32_Rel* rel_table = (Elf32_Rel*)(prog_start + rel_offset);
   for (uint i = 0; i < rel_count; i++) {
     uint* target = (uint*)(prog_start + rel_table[i].r_offset);
-    cprintf("relocate 0x%x ->", *target);
     *target += (uint)prog_start;
-    cprintf(" 0x%x at 0x%x\n", *target, target);
   }
   iunlockput(ip);
   end_op();
   ip = 0;
-  cprintf("returning from kload_elf\n");
   return 0;
 
  bad_after_alloc:
