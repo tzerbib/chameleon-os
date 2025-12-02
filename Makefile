@@ -37,7 +37,7 @@ OBJS = \
 TOOLPREFIX = i686-elf-
 
 # Using native tools (e.g., on X86 Linux)
-TOOLPREFIX = i686-linux-gnu-
+# TOOLPREFIX = i686-linux-gnu-
 
 # Try to infer the correct TOOLPREFIX if not set
 ifndef TOOLPREFIX
@@ -170,6 +170,9 @@ mkfs: mkfs.c fs.h
 # http://www.gnu.org/software/make/manual/html_node/Chained-Rules.html
 .PRECIOUS: %.o
 
+UEXTS_SRC=$(wildcard *.ext.c)
+UEXTS=$(UEXTS_SRC:.c=)
+
 UPROGS=\
 	_cat\
 	_echo\
@@ -191,7 +194,9 @@ UPROGS=\
 	_ns_test\
 	_zombies\
 	_true\
-	x.ext\
+	_x_ns_test\
+	_x_ns_test_1\
+	$(UEXTS)
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
@@ -204,7 +209,8 @@ clean:
 	initcode initcode.out kernel xv6.img fs.img kernelmemfs \
 	xv6memfs.img mkfs .gdbinit \
 	$(UPROGS)\
-	*.ext xtable.h
+	$(UEXTS)\
+	xtable.h
 
 # make a printout
 FILES = $(shell grep -v '^\#' runoff.list)
@@ -270,6 +276,8 @@ EXTRA=\
 	zombies.c\
 	ns_test.c\
 	true.c\
+	x_ns_test.c\
+	x_ns_test_1.c\
 
 dist:
 	rm -rf dist
@@ -301,6 +309,9 @@ tar:
 	(cd /tmp; tar cf - xv6) | gzip >xv6-rev10.tar.gz  # the next one will be 10 (9/17)
 
 .PHONY: dist-test dist
+
+.PHONY: extensions
+extensions: $(UEXTS)
 
 %.ext: %.ext.o xlib.o
 	$(LD) $(LDFLAGS) -pie -e main -o $@ $^
