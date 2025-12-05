@@ -46,6 +46,7 @@ struct extension* ext_load(char* path) {
   // Initialize extension
   found:
   e->state = EXT_LOADED;
+  e->hp = HP_none;
   
   release(&exttable.lock);
  
@@ -62,9 +63,8 @@ struct extension* ext_load(char* path) {
   return e;
 }
 
-void ext_attach(struct extension* ext, enum hookpoint hp) {
+void ext_attach(struct extension* e, enum hookpoint hp) {
   // Change labels here to attach to a different syscall
- 
   extern unsigned char trampoline_call_start;
   extern unsigned char trampoline_call_end;
 
@@ -95,15 +95,15 @@ void ext_attach(struct extension* ext, enum hookpoint hp) {
   offset += difference;
   memmove(hp_start + 1, &offset, sizeof(offset));
 
-  ext->state = EXT_ATTACHED;
+  e->state = EXT_ATTACHED;
   struct proc *currproc = myproc();
   struct namespace *currns = currproc->ns;
-  ext->ns = currns;
-  attach_ext_to_ns(currns, ext);
+  e->ns = currns;
+  attach_ext_to_ns(currns, e);
+  e->hp = hp;
   
   release(&exttable.lock);
 }
-
 
 void trampoline(void) {
 

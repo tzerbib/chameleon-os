@@ -7,7 +7,8 @@ struct extension {
   void* (*entry)(void);        // pointer to the extension code
   char name[16];               // extension name (debugging)
   struct namespace* ns;        // pointer to namespace
+  enum hookpoint hp;
 };
 
-void ext_attach(struct extension* ext, enum hookpoint hp);
 struct extension* ext_load(char* path);
+void ext_attach(struct extension* e, enum hookpoint hp);
