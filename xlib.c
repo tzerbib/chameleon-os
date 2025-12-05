@@ -1,6 +1,7 @@
 #include "xlib.h"
 #include "xtable.h"
 
+typedef void(printf_t)(char*, ...);
 
 char* kalloc(void) {
   return ((typeof(kalloc)*)((function_t*)XTABLE_ADDR)[0])();
@@ -11,5 +12,13 @@ void kfree(char*v) {
 }
 
 void xputs(char * s) {
-  ((typeof(xputs)*)((function_t*)XTABLE_ADDR)[2])(s);
+  ((printf_t*)((function_t*)XTABLE_ADDR)[2])(s);
+}
+
+void xputd(int i) {
+  ((printf_t*)((function_t*)XTABLE_ADDR)[2])("%d", i);
+}
+
+int mypid() {
+  return ((typeof(mypid)*)((function_t*)XTABLE_ADDR)[3])();
 }
