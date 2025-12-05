@@ -4,6 +4,7 @@
 #include "mmu.h"
 #include "proc.h"
 #include "extensions.h"
+#include "api/hookpoint.h"
 
 // ?? maybe move the following functions to syscall.c
 //  depending on if they would be used elsewhere
@@ -31,36 +32,20 @@ int argkptr(int n, void** pp) {
   return 0;
 }
 
+int sys_extattach(void) {
+  struct extension* e;
+  int hp;
+
+  if (argkptr(0, (void**)&e) < 0 || argint(1, &hp) < 0) {
+    return -1;
+  }
+
+  ext_attach(e, (enum hookpoint)hp);
+  
+  return 0;
+}
 
 int sys_extload(void) {
-  cprintf("hello from sys_extload\n");
-  void* (*fn)(void);
-  int n;
-  struct extension** r;
-
-  if (argint(1, &n) < 0 || argfn(0, &fn) < 0 || argptr(2, (char**)&r, sizeof(r)) < 0) {
-    return -1;
-  }
-
-  *r = ext_load(fn, n);
-  return 0;
-}
-
-int sys_extattach(void) {
-  cprintf("hello from sys_extattach!\n");
-  struct extension* e;
-  
-  if (argkptr(0, (void**)&e) < 0) {
-    return -1;
-  }
-
-  ext_attach(e);
-  
-  return 0;
-}
-
-int sys_extload_elf(void) {
-  cprintf("hello from sys_extload_elf\n");
   char* path;
   struct extension** r;
 
@@ -68,6 +53,6 @@ int sys_extload_elf(void) {
     return -1;
   }
 
-  *r = ext_load_elf(path);
+  *r = ext_load(path);
   return 0;
 }

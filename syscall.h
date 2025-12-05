@@ -20,10 +20,9 @@
 #define SYS_link   19
 #define SYS_mkdir  20
 #define SYS_close  21
-#define SYS_extload 22
-#define SYS_extattach 23
-#define SYS_extload_elf 24
-#define SYS_getnsid 25
-#define SYS_mkns 26
-#define SYS_chns 27
-#define SYS_rmns 28
+#define SYS_extattach 22
+#define SYS_extload 23
+#define SYS_getnsid 24
+#define SYS_mkns 25
+#define SYS_chns 26
+#define SYS_rmns 27

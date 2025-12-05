@@ -103,9 +103,8 @@ extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
-extern int sys_extload(void);
 extern int sys_extattach(void);
-extern int sys_extload_elf(void);
+extern int sys_extload(void);
 extern int sys_getnsid(void);
 extern int sys_mkns(void);
 extern int sys_chns(void);
@@ -133,9 +132,8 @@ static int (*syscalls[])(void) = {
 [SYS_link] = sys_link,
 [SYS_mkdir] = sys_mkdir,
 [SYS_close] = sys_close,
-[SYS_extload] = sys_extload,
 [SYS_extattach] = sys_extattach,
-[SYS_extload_elf] = sys_extload_elf,
+[SYS_extload] = sys_extload,
 [SYS_getnsid] = sys_getnsid,
 [SYS_mkns] = sys_mkns,
 [SYS_chns] = sys_chns,

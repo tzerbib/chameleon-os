@@ -5,12 +5,19 @@
 #include "mmu.h"
 #include "proc.h"
 #include "namespace.h"
+#include "api/hookpoint.h"
+#include "hookpoints.h"
+
+int mypid(void) {
+  return myproc()->pid;
+}
 
 typedef void(*function_t)(void);
 function_t xtable[] = {
   [0] = (function_t)kalloc,
   [1] = (function_t)kfree,
   [2] = (function_t)cprintf,
+  [3] = (function_t)mypid,
 };
 
 struct {
@@ -21,7 +28,7 @@ struct {
 extern char end[];
 char* n_ext = end;
 
-struct extension* ext_load_elf(char* path) {
+struct extension* ext_load(char* path) {
   acquire(&exttable.lock);
 
   struct extension* e;
@@ -55,48 +62,9 @@ struct extension* ext_load_elf(char* path) {
   return e;
 }
 
-struct extension* ext_load(void* (*fn)(void), int n) {
-  // Check if function size is bigger than a page
-  if (n < 0 || n > PGSIZE) {
-    return (void*)0;
-  }
-  
-  acquire(&exttable.lock);
-  
-  struct extension* e;
-  
-  // Look for an unused extension
-  for (e = exttable.extensions; e < &exttable.extensions[NEXT]; e++) {
-    if (e->state == EXT_UNUSED) {
-      goto found;
-    }
-  }
-
-  release(&exttable.lock);
-  return (void*)0;
-  
-  // Initialize extension
-  found:
-  e->state = EXT_LOADED;
-  
-  // Allocate a page to copy the function from user space to kernel space
-  // TODO: this could be definitely optimized
-  char* page = kalloc();
-  memmove(page, fn, n);
-  e->entry = (void*(*)(void)) page;
-  
-  safestrcpy(e->name, "read_ext", sizeof(e->name)); // Random hardcoded name for now
-  
-  release(&exttable.lock);
-  return e;
-}
-
-void ext_attach(struct extension* ext) {
-  cprintf("hello from ext_attach!\n");
-
+void ext_attach(struct extension* ext, enum hookpoint hp) {
   // Change labels here to attach to a different syscall
-  extern unsigned char sys_exec_nop_start;
-  extern unsigned char sys_exec_nop_end;
+ 
   extern unsigned char trampoline_call_start;
   extern unsigned char trampoline_call_end;
 
@@ -114,15 +82,18 @@ void ext_attach(struct extension* ext) {
     :
     :);
 
+  unsigned char* hp_start = hptable[hp].start;
+  unsigned char* hp_end = hptable[hp].end;
+   
   // Write call trampoline instruction to replace nops
-  memmove(&sys_exec_nop_start, &trampoline_call_start, &trampoline_call_end - &trampoline_call_start);
+  memmove(hp_start, &trampoline_call_start, &trampoline_call_end - &trampoline_call_start);
 
   // Recalculate the relative address of the trampoline function
-  int difference = &trampoline_call_end - &sys_exec_nop_end;
+  int difference = &trampoline_call_end - hp_end;
   int offset;
-  memmove(&offset, &sys_exec_nop_start + 1, sizeof(offset));
+  memmove(&offset, hp_start + 1, sizeof(offset));
   offset += difference;
-  memmove(&sys_exec_nop_start + 1, &offset, sizeof(offset));
+  memmove(hp_start + 1, &offset, sizeof(offset));
 
   ext->state = EXT_ATTACHED;
   struct proc *currproc = myproc();
@@ -135,33 +106,21 @@ void ext_attach(struct extension* ext) {
 
 
 void trampoline(void) {
-  // cprintf("hello from trampoline!!\n");
-
-  struct extension* e;
 
   struct proc *currproc = myproc();
   struct namespace *currns = currproc->ns;
 
-  acquire(&exttable.lock);
-
-  for(e = exttable.extensions; e < &exttable.extensions[NEXT]; ++e) {
-    if(e->state != EXT_ATTACHED) {
+  struct ns_object* ns_obj;
+  acquire(&currns->lock);
+  for (ns_obj = currns->namespaced_exts; ns_obj < &currns->namespaced_exts[N_NS_EXT]; ++ns_obj) {
+    void* p = ns_obj->pointer;
+    struct extension* e = (struct extension*)p;
+    if (e->state != EXT_ATTACHED) {
       continue;
     }
 
-    if (e->ns != currns) {
-      continue;
-    }
-
-    // Release extension table lock during extension execution
-    release(&exttable.lock);
-
-    // cprintf("extension returns: %d\n", e->text());
     e->entry();
-
-    acquire(&exttable.lock);
   }
-
-  release(&exttable.lock);
+  release(&currns->lock);
 }
 
