@@ -27,14 +27,12 @@ struct namespace * create_ns() {
 
 	if (ns == end) {
 		return (void *)0x0;
-	} else {
-		return ns;
 	}
+	return ns;
 }
 
 // Gets the ID of the namespace. Assumes ns is a valid namespace.
 int get_nsid(struct namespace *ns) {
-	cprintf("getting ns 0x%p\n", ns);
 	struct namespace *start = namespace_table.namespaces;
 	return ns - start;
 }
@@ -54,18 +52,22 @@ struct namespace *get_ns(int id) {
 
 	if (slot_state == AVAILABLE) {
 		return (void *)0x0;
-	} else {
-		return &namespace_table.namespaces[id];
-	}
+	} 
+	return &namespace_table.namespaces[id];
 }
 
 void initialize_namespace(struct namespace *ns) {
 	acquire(&ns->lock);
 	ns->slot_state = AVAILABLE;
-	struct ns_object *ns_obj = ns->namespaced_objects;
-	struct ns_object *end = &ns->namespaced_objects[N_NS_OBJ];
-	for (; ns_obj < end; ++ns_obj) {
+	struct ns_object* ns_obj = ns->namespaced_objects;
+	struct ns_object* ns_obj_end = &ns->namespaced_objects[N_NS_OBJ];
+	for (; ns_obj < ns_obj_end; ++ns_obj) {
 		ns_obj->kind = NONE;
+	}
+	struct ns_object *ns_ext = ns->namespaced_exts;
+	struct ns_object *ns_ext_end = &ns->namespaced_exts[N_NS_EXT];
+	for (; ns_ext < ns_ext_end; ++ns_ext) {
+		ns_ext->kind = NONE;
 	}
 	release(&ns->lock);
 }
@@ -112,7 +114,6 @@ int remove_from_ns(struct namespace *ns, void *ptr) {
 	struct ns_object *end = &ns->namespaced_objects[N_NS_OBJ];
 	for (; ns_obj < end; ++ns_obj) {
 		if (ns_obj->pointer == ptr) {
-			cprintf("Removing obj from ns 0x%p\n", ns);
 			ns_obj->kind = NONE;
 			release(&ns->lock);
 			return 0;
@@ -132,12 +133,18 @@ int attach_ptr_to_ns(struct namespace *ns, void* ptr, enum ns_entry_kind kind) {
 		goto bad;
 	}
 
-	struct ns_object *ns_obj = ns->namespaced_objects;
-	struct ns_object *end = &ns->namespaced_objects[N_NS_OBJ];
+	struct ns_object* ns_obj = 0x0;
+	struct ns_object* end = 0x0;
+	if (kind != EXTENSION) {
+		ns_obj = ns->namespaced_objects;
+		end = &ns->namespaced_objects[N_NS_OBJ];
+	} else {
+		ns_obj = ns->namespaced_exts;
+		end = &ns->namespaced_exts[N_NS_EXT];
+	}
 
 	for (; ns_obj < end; ++ns_obj) {
 		if (ns_obj->kind == NONE) {
-			cprintf("Attaching to ns 0x%p\n", ns);
 			ns_obj->pointer = ptr;
 			ns_obj->kind = kind;
 			release(&ns->lock);
@@ -181,7 +188,6 @@ int attach_ext_to_ns(struct namespace* ns, struct extension* ext) {
 // Destroy the namespace ns. Assumes ns is valid. If ns has objects, will return
 // error and make no changes to the ns.
 int destroy_ns(struct namespace *ns) {
-
 	acquire(&ns->lock);
 	struct ns_object *ns_object = ns->namespaced_objects;
 	struct ns_object *end = &ns->namespaced_objects[N_NS_OBJ];
@@ -194,7 +200,6 @@ int destroy_ns(struct namespace *ns) {
 			return -1;
 		}
 	}
-	cprintf("Destroyed ns 0x%p\n", ns);
 	ns->slot_state = AVAILABLE;
 	release(&ns->lock);
 	return 0;

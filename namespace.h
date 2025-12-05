@@ -4,6 +4,7 @@
 
 #define N_NS            16
 #define N_NS_OBJ        16
+#define N_NS_EXT       16
 
 enum slot_state {
 	AVAILABLE,
@@ -23,8 +24,10 @@ struct ns_object {
 
 struct namespace {
 	struct spinlock lock;
-	// points to objects in the namespace
+	// points to (non-extension) objects in the namespace 
 	struct ns_object namespaced_objects[N_NS_OBJ];
+	// points to only extensions in the namespace
+	struct ns_object namespaced_exts[N_NS_EXT];
 	enum slot_state slot_state;
 };
 

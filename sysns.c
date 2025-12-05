@@ -14,10 +14,9 @@ int sys_getnsid(void) {
 int sys_mkns(void) {
 	struct namespace *ns = create_ns();
 	if (!ns) {
-		cprintf("HERE");
 		return -1;
 	}
-	cprintf("New namespace ptr: %p\n", ns);
+
 	int id = get_nsid(ns);
 	return id;
 }
@@ -42,8 +41,7 @@ int sys_rmns(void) {
 	if(argint(0, &nsid) < 0) {
 		return -1;
 	}
-	cprintf("Removing %d\n", nsid);
+
 	struct namespace *ns = get_ns(nsid);
-	cprintf("removing namespace ptr: %p\n", ns);
 	return destroy_ns(ns);
 }
