@@ -196,6 +196,7 @@ UPROGS=\
 	_true\
 	_x_ns_test\
 	_x_ns_test_1\
+	_x_time\
 	$(UEXTS)
 
 fs.img: mkfs README $(UPROGS)
@@ -278,6 +279,7 @@ EXTRA=\
 	true.c\
 	x_ns_test.c\
 	x_ns_test_1.c\
+	x_time.c\
 
 dist:
 	rm -rf dist
