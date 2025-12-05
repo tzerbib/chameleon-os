@@ -254,6 +254,9 @@ exit(void)
     }
   }
 
+  // Remove currproc from its ns
+  remove_from_ns(curproc->ns, curproc);
+
   begin_op();
   iput(curproc->cwd);
   end_op();
