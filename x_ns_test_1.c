@@ -12,6 +12,4 @@ int main(void) {
 
   char* args[] = { "true", 0 };
   exec("true", args);
-
-  exit();
 }

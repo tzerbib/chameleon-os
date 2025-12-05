@@ -1,27 +1,16 @@
+#include "api/hookpoint.h"
 #include "types.h"
 #include "stat.h"
 #include "user.h"
 
-
-__attribute__((section("extension"))) void* f(void) {
-  int a = 4;
-  int b = 6;
-  return (void*)(a + b);
-}
-
-extern unsigned char __start_extension;
-extern unsigned char __stop_extension;
-
-int
-main(void)
-{
+int main(void) {
   printf(1, "hello from zombies!\n");
 
   for (int tries = 0; tries < 10; tries++) {
 
     struct extension *e;
-    extload(&f, &__stop_extension - &__start_extension, &e);
-    extattach(e);
+    extload("x1.ext", &e);
+    extattach(e, HP_exec);
   
     char* args[] = { "true", 0 };
   
