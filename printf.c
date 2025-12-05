@@ -9,9 +9,28 @@ putc(int fd, char c)
 }
 
 static void
+printu64(int fd, uint64 xx, int base)
+{
+  static char digits[] = "0123456789abcdef";
+  char buf[16];
+  int i;
+  uint64 x;
+
+  x = xx;
+
+  i = 0;
+  do{
+    buf[i++] = digits[x % base];
+  }while((x /= base) != 0);
+
+  while(--i >= 0)
+    putc(fd, buf[i]);
+}
+
+static void
 printint(int fd, int xx, int base, int sgn)
 {
-  static char digits[] = "0123456789ABCDEF";
+  static char digits[] = "0123456789abcdef";
   char buf[16];
   int i, neg;
   uint x;
@@ -35,7 +54,7 @@ printint(int fd, int xx, int base, int sgn)
     putc(fd, buf[i]);
 }
 
-// Print to the given fd. Only understands %d, %x, %p, %s.
+// Print to the given fd. Only understands %d, %x, %p, %s, %z.
 void
 printf(int fd, const char *fmt, ...)
 {
@@ -74,6 +93,10 @@ printf(int fd, const char *fmt, ...)
         ap++;
       } else if(c == '%'){
         putc(fd, c);
+      } else if (c == 'z') {
+         uint64* temp = (uint64*)ap;
+        printu64(fd, *temp++, 16);
+        ap = (uint*)temp;
       } else {
         // Unknown % sequence.  Print it to draw attention.
         putc(fd, '%');

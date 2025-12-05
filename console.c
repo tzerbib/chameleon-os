@@ -25,6 +25,25 @@ static struct {
 } cons;
 
 static void
+printu64(uint64 xx, int base)
+{
+  static char digits[] = "0123456789abcdef";
+  char buf[16];
+  int i;
+  uint64 x;
+
+  x = xx;
+
+  i = 0;
+  do{
+    buf[i++] = digits[x % base];
+  }while((x /= base) != 0);
+
+  while(--i >= 0)
+    consputc(buf[i]);
+}
+
+static void
 printint(int xx, int base, int sign)
 {
   static char digits[] = "0123456789abcdef";
@@ -50,7 +69,8 @@ printint(int xx, int base, int sign)
 }
 //PAGEBREAK: 50
 
-// Print to the console. only understands %d, %x, %p, %s.
+// Print to the console. only understands %d, %x, %p, %s, %z.
+// %z for unsigned long long (uint64)
 void
 cprintf(char *fmt, ...)
 {
@@ -87,6 +107,11 @@ cprintf(char *fmt, ...)
         s = "(null)";
       for(; *s; s++)
         consputc(*s);
+      break;
+    case 'z':
+      uint64* temp = (uint64*)argp;
+      printu64(*temp++, 16);
+      argp = (uint*)temp;
       break;
     case '%':
       consputc('%');

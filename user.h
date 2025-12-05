@@ -1,4 +1,5 @@
 #include "api/hookpoint.h"
+#include "types.h"
 
 struct stat;
 struct rtcdate;
@@ -46,3 +47,19 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+
+static inline uint64 rdtsc(void) {
+  uint cycles_high;
+  uint cycles_low;
+  asm volatile (
+    "rdtsc\n"
+    "mov %%edx, %0\n"
+    "mov %%eax, %1\n"
+    : "=r" (cycles_high), "=r" (cycles_low)
+    :
+    :"%rax", "rbx", "rcx", "rdx");
+  uint64 cycles = cycles_high;
+  cycles <<= 32;
+  cycles |= cycles_low;
+  return cycles;
+}
