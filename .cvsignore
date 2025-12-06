@@ -18,3 +18,7 @@ fmt
 libext
 .clangd
 .DS_Store
+.*.swp
+*.ext
+xtable.h
+data/

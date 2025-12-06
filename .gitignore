@@ -19,5 +19,6 @@ libext
 .clangd
 .DS_Store
 .*.swp
-x.ext
+*.ext
 xtable.h
+data/
