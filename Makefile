@@ -190,9 +190,7 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_x_hello\
-	_x_hello_elf\
 	_ns_test\
-	_zombies\
 	_true\
 	_x_ns_test\
 	_x_ns_test_1\
@@ -273,8 +271,6 @@ EXTRA=\
 	README dot-bochsrc *.pl toc.* runoff runoff1 runoff.list\
 	.gdbinit.tmpl gdbutil\
 	x_hello.c\
-	x_hello_elf.c\
-	zombies.c\
 	ns_test.c\
 	true.c\
 	x_ns_test.c\
