@@ -64,7 +64,6 @@ struct extension* ext_load(char* path) {
 }
 
 void ext_attach(struct extension* e, enum hookpoint hp) {
-  // Change labels here to attach to a different syscall
   extern unsigned char trampoline_call_start;
   extern unsigned char trampoline_call_end;
 
@@ -105,22 +104,72 @@ void ext_attach(struct extension* e, enum hookpoint hp) {
   release(&exttable.lock);
 }
 
-void trampoline(void) {
+void ext_detach(struct extension* e) {
+  // TODO: this function should check if 
+  //  multiple ext is attached to this hook
 
+  extern unsigned char nops_start_label;
+  extern unsigned char nops_end_label;
+
+  if (e->state != EXT_ATTACHED) {
+    return;
+  }
+  struct proc *currproc = myproc();
+  struct namespace *currns = currproc->ns;
+
+  if (e->ns != currns) {
+    // Can only detach from current ns?
+    cprintf("Cannot detach, wrong ns\n");
+    return;
+  }
+
+  acquire(&exttable.lock);
+
+  // nops
+  asm volatile (
+    ".globl nops_start_label\n"
+    "nops_start_label:\n"
+    "nop\n"
+    "nop\n"
+    "nop\n"
+    "nop\n"
+    "nop\n"
+    ".globl nops_end_label\n"
+    "nops_end_label:\n"
+    :
+    :
+    :);
+
+  unsigned char* hp_start = hptable[e->hp].start;
+  // unsigned char* hp_end = hptable[e->hp].end;
+   
+  // Write nops to replace call trampoline instruction
+  memmove(hp_start, &nops_start_label, &nops_end_label - &nops_start_label);
+
+  e->state = EXT_LOADED;
+  e->ns = 0x0;
+  remove_from_ns(currns, e);
+  e->hp = HP_none;
+  
+  release(&exttable.lock);
+}
+
+void trampoline(void) {
   struct proc *currproc = myproc();
   struct namespace *currns = currproc->ns;
 
   struct ns_object* ns_obj;
-  acquire(&currns->lock);
+  // TODO: figure out how to remove locking
+  // acquire(&currns->lock);
   for (ns_obj = currns->namespaced_exts; ns_obj < &currns->namespaced_exts[N_NS_EXT]; ++ns_obj) {
     void* p = ns_obj->pointer;
     struct extension* e = (struct extension*)p;
     if (e->state != EXT_ATTACHED) {
-      continue;
+      break;
     }
 
     e->entry();
   }
-  release(&currns->lock);
+  // release(&currns->lock);
 }
 

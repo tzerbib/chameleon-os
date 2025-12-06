@@ -33,6 +33,7 @@ int getnsid(void);
 int mkns(void);
 int chns(int);
 int rmns(int);
+int extdetach(struct extension*);
 
 // ulib.c
 int stat(const char*, struct stat*);

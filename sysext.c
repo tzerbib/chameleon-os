@@ -56,3 +56,15 @@ int sys_extload(void) {
   *r = ext_load(path);
   return 0;
 }
+
+int sys_extdetach(void) {
+  struct extension* e;
+
+  if (argkptr(0, (void**)&e) < 0) {
+    return -1;
+  }
+
+  ext_detach(e);
+  
+  return 0;
+}

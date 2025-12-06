@@ -26,3 +26,4 @@
 #define SYS_mkns 25
 #define SYS_chns 26
 #define SYS_rmns 27
+#define SYS_extdetach 28

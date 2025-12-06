@@ -12,3 +12,4 @@ struct extension {
 
 struct extension* ext_load(char* path);
 void ext_attach(struct extension* e, enum hookpoint hp);
+void ext_detach(struct extension* e);
