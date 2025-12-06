@@ -11,6 +11,9 @@ main(void)
   extload("x3.ext", &e);
   extattach(e, HP_getpid);
   printf(1, "getpid %d\n", getpid());
+  printf(1, "e %p\n", e);
   printf(1, "exiting user main\n");
+  extdetach(e);
+  printf(1, "getpid %d\n", getpid());
   exit();
 }
