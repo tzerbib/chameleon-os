@@ -148,7 +148,7 @@ void ext_detach(struct extension* e) {
 
   e->state = EXT_LOADED;
   e->ns = 0x0;
-  remove_from_ns(currns, e);
+  remove_ext_from_ns(currns, e);
   e->hp = HP_none;
   
   release(&exttable.lock);

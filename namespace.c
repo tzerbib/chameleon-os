@@ -101,7 +101,7 @@ struct namespace *global_ns(void) {
 
 // Removes the ptr from ns. Assumes ns is valid. Returns err if ns is AVAILABLE
 // (a state error) or the ptr is not in ns. If error, no changes are made.
-int remove_from_ns(struct namespace *ns, void *ptr) {
+int remove_ptr_from_ns(struct namespace *ns, void *ptr, enum ns_entry_kind kind) {
 	acquire(&ns->lock);
 
 	if (ns->slot_state == AVAILABLE) {
@@ -109,9 +109,14 @@ int remove_from_ns(struct namespace *ns, void *ptr) {
 		return -1;
 	}
 
-
 	struct ns_object *ns_obj = ns->namespaced_objects;
 	struct ns_object *end = &ns->namespaced_objects[N_NS_OBJ];
+	
+	if (kind == EXTENSION) {
+		ns_obj = ns->namespaced_exts;
+	  end = &ns->namespaced_exts[N_NS_EXT];
+	}
+
 	for (; ns_obj < end; ++ns_obj) {
 		if (ns_obj->pointer == ptr) {
 			ns_obj->kind = NONE;
@@ -122,6 +127,14 @@ int remove_from_ns(struct namespace *ns, void *ptr) {
 
 	release(&ns->lock);
 	return -1;
+}
+
+int remove_proc_from_ns(struct namespace* ns, struct proc* proc) {
+	return remove_ptr_from_ns(ns, (void*)proc, PROCESS);
+}
+
+int remove_ext_from_ns(struct namespace* ns, struct extension* ext) {
+	return remove_ptr_from_ns(ns, (void*)ext, EXTENSION);
 }
 
 // Attach pointer to ns. Assumes ns is valid.

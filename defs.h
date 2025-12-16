@@ -198,10 +198,11 @@ struct namespace*   global_ns(void);
 struct namespace*   create_ns(void);
 int                 destroy_ns(struct namespace*);
 int                 attach_proc_to_ns(struct namespace*, struct proc*);
-int                 remove_from_ns(struct namespace*, void*);
+int                 remove_proc_from_ns(struct namespace*, struct proc*);
 int                 get_nsid(struct namespace*);
 struct namespace*   get_ns(int id);
-int                 attach_ext_to_ns(struct namespace* ns, struct extension* ext);
+int                 attach_ext_to_ns(struct namespace*, struct extension*);
+int                 remove_ext_from_ns(struct namespace*, struct extension*);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

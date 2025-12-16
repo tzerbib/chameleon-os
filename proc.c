@@ -255,7 +255,7 @@ exit(void)
   }
 
   // Remove currproc from its ns
-  remove_from_ns(curproc->ns, curproc);
+  remove_proc_from_ns(curproc->ns, curproc);
 
   begin_op();
   iput(curproc->cwd);
@@ -560,7 +560,7 @@ int proc_chns(struct proc *p, struct namespace *ns) {
 	}
 
 	// Then remove proc pointer from namespace objects
-	if (remove_from_ns(old_ns, p) < 0) {
+	if (remove_proc_from_ns(old_ns, p) < 0) {
 		return -1;
 	}
 	release(&ptable.lock);
