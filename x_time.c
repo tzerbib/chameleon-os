@@ -3,16 +3,12 @@
 #include "stat.h"
 #include "user.h"
 
-int main(void) {
-  printf(1, "hello from x_time!\n");
+void run_all(struct extension* e) {
   int old_ns = getnsid();
-
-  uint64 cycles = rdtsc();
-  printf(1, "rdtsc 0x%z\n", cycles);
 
   // All getpids below should be normal (with nops)
   uint64 start = rdtsc();
-  for (int i = 0; i < 100000; i++) {
+  for (int i = 0; i < 10000; i++) {
     getpid();
   }
   uint64 end = rdtsc();
@@ -20,15 +16,11 @@ int main(void) {
   printf(1, "[0] duration is %z (nops only)\n", end - start);
   
   // Attaching x3 to old ns
-  struct extension* e;
-  extload("x3.ext", &e);
   extattach(e, HP_getpid);
-
-  // TODO: show attaching more extension does not incur more cost with ns
   
   // All getpids below go to the trampoline and the extension
   start = rdtsc();
-  for (int i = 0; i < 100000; i++) {
+  for (int i = 0; i < 10000; i++) {
     getpid();
   }
   end = rdtsc();
@@ -39,7 +31,7 @@ int main(void) {
 
   // All getpids below go to only the trampoline
   start = rdtsc();
-  for (int i = 0; i < 100000; i++) {
+  for (int i = 0; i < 10000; i++) {
     getpid();
   }
   end = rdtsc();
@@ -49,14 +41,20 @@ int main(void) {
 
   // Detaching e, this will put nops back to getpid
   extdetach(e);
+}
 
-  // All getpids below should be normal (with nops)
-  start = rdtsc();
-  for (int i = 0; i < 100000; i++) {
-    getpid();
+int main(void) {
+  printf(1, "hello from x_time!\n");
+
+  uint64 cycles = rdtsc();
+  printf(1, "rdtsc 0x%z\n", cycles);
+
+  struct extension* e;
+  extload("x3.ext", &e);
+
+  for (int i = 0; i < 10; i++) {
+    run_all(e);
   }
-  end = rdtsc();
-  printf(1, "[3] duration is %z (nops only)\n", end - start);
 
   exit();
 }
