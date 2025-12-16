@@ -110,7 +110,7 @@ cprintf(char *fmt, ...)
       break;
     case 'z':
       uint64* temp = (uint64*)argp;
-      printu64(*temp++, 16);
+      printu64(*temp++, 10);
       argp = (uint*)temp;
       break;
     case '%':

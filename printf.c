@@ -95,7 +95,7 @@ printf(int fd, const char *fmt, ...)
         putc(fd, c);
       } else if (c == 'z') {
          uint64* temp = (uint64*)ap;
-        printu64(fd, *temp++, 16);
+        printu64(fd, *temp++, 10);
         ap = (uint*)temp;
       } else {
         // Unknown % sequence.  Print it to draw attention.
