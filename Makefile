@@ -32,6 +32,8 @@ OBJS = \
 	elf.o\
 	namespace.o\
 	sysns.o\
+	hookpoints.o\
+	trampoline.o\
 
 # Cross-compiling (e.g., on Mac OS X)
 TOOLPREFIX = i686-elf-
