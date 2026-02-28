@@ -1,3 +1,4 @@
+#include "api/hookpoint.h"
 #include "types.h"
 #include "param.h"
 #include "memlayout.h"
@@ -6,6 +7,7 @@
 #include "defs.h"
 #include "x86.h"
 #include "elf.h"
+#include "extensions.h"
 
 // Advances *mem by one page
 // Returns the end address of that page
@@ -43,11 +45,92 @@ int read_relocation(struct inode *ip, struct proghdr* php, uint* rel_offset, uin
       return 0;
 }
 
+struct symstrlocations {
+  Elf32_Word symtab_size;
+  Elf32_Off symtab_off;
+  Elf32_Word strtab_size;
+  Elf32_Off strtab_off;
+};
+
+int read_shdrs(struct inode* ip, struct elfhdr const* elf, struct symstrlocations* locations) {
+  Elf32_Shdr shdrs[elf->shnum];
+  if (sizeof(shdrs) != elf->shnum * elf->shentsize) {
+    panic("Elf section headers size does not match");
+  }
+  if (readi(ip, (char*)&shdrs, elf->shoff, sizeof(shdrs)) != sizeof(shdrs)) {
+    return -1;
+  }
+
+  Elf32_Shdr* symtab_hdr = nullptr;
+  Elf32_Shdr* strtab_hdr = nullptr;
+
+  for(int i = 0; i < elf->shnum; i++) {
+    switch (shdrs[i].sh_type) {
+    case SHT_SYMTAB:
+      symtab_hdr = &shdrs[i];
+      strtab_hdr = &shdrs[symtab_hdr->sh_link];
+      break;
+    default:
+    }
+  }
+
+  if (symtab_hdr == nullptr || strtab_hdr == nullptr) {
+    panic("No SYMTAB or STRTAB section");
+    return -1;
+  }
+
+  *locations = (struct symstrlocations) {
+    .symtab_size = symtab_hdr->sh_size,
+    .symtab_off = symtab_hdr->sh_offset,
+    .strtab_size = strtab_hdr->sh_size,
+    .strtab_off = strtab_hdr->sh_offset,
+  };
+
+  return 0;
+}
+
+int read_symtab(struct inode* ip, struct symstrlocations* locations, uint* entrypoint, enum hookpoint* hp) {
+  uint num_sym = locations->symtab_size / sizeof(Elf32_Sym);
+  Elf32_Sym symtab[num_sym];
+  if (readi(ip, (char*)&symtab, locations->symtab_off, sizeof(symtab)) != sizeof(symtab)) {
+    return -1;
+  }
+
+  char strtab[locations->strtab_size];
+  if (readi(ip, (char*)&strtab, locations->strtab_off, sizeof(strtab)) != sizeof(strtab)) {
+    return -1;
+  }
+
+  for (uint i = 0; i < num_sym; ++i) {
+    Elf32_Sym const* symbol = &symtab[i];
+    if ((symbol->st_info & STT_FUNC) == 0) {
+      continue;
+    }
+    char const* name = &strtab[symbol->st_name];
+    static char const ROEXT_PREFIX[] = "____roext_at_";
+    static char const RWEXT_PREFIX[] = "____rwext_at_";
+    if (strlen(name) < strlen(ROEXT_PREFIX)) {
+      continue;
+    }
+
+    if (memcmp(name, ROEXT_PREFIX, strlen(ROEXT_PREFIX)) != 0 && memcmp(name, RWEXT_PREFIX, strlen(RWEXT_PREFIX)) != 0) {
+      continue;
+    }
+
+    char const* hookpoint = &strtab[symbol->st_name + strlen(ROEXT_PREFIX)];
+    *entrypoint = symbol->st_value;
+    *hp = check_hookpoint(hookpoint);
+    return 0;
+  }
+
+  panic("no extension entrypoint in extension binary");
+}
+
 // Caller is responsible for providing suitable memory through page
 // Assumes page != NULL
 // Fills page and writes entry point within it to *entry
 // Returns 0 on success, -1 on failure
-int kload_elf(char* path, char** mem, void** entry) {
+int kload_elf(char* path, char** mem, struct extension* ep) {
   int i;
   int off;
   struct elfhdr elf;
@@ -95,7 +178,7 @@ int kload_elf(char* path, char** mem, void** entry) {
       continue;
     }
     
-    if(ph.memsz < ph.filesz) {
+    if(ph.memsz != ph.filesz) {
       goto bad_after_alloc;
     }
 
@@ -115,13 +198,21 @@ int kload_elf(char* path, char** mem, void** entry) {
       }
     }
 
-    // TODO: think about whether filesz or memsz is right
     if (readi(ip, prog_start + ph.vaddr, ph.off, ph.filesz) != (int)ph.filesz) {
       goto bad_after_alloc;
     }
   }
 
-  *entry = prog_start + elf.entry;
+  struct symstrlocations locations;
+  if (read_shdrs(ip, &elf, &locations) == -1) {
+    goto bad_after_alloc;
+  }
+  
+  uint entrypoint;
+  enum hookpoint hp;
+  read_symtab(ip, &locations, &entrypoint, &hp);
+  ep->entry = (void *(*)(...))(prog_start + entrypoint);
+  ep->hp = hp;
 
   // Perform relocation
   Elf32_Rel* rel_table = (Elf32_Rel*)(prog_start + rel_offset);

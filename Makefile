@@ -312,7 +312,7 @@ tar:
 extensions: $(UEXTS)
 
 %.ext: %.ext.o xlib.o
-	$(LD) $(LDFLAGS) -pie -e main -o $@ $^
+	$(LD) $(LDFLAGS) -pie -o $@ $^
 
 %.ext.o: %.ext.c
 	$(CC) $(CFLAGS) -fPIC -c -o $@ $<

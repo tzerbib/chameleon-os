@@ -1,4 +1,5 @@
 #include "extensions.h"
+#include "trampoline.h"
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -31,11 +32,11 @@ char* n_ext = end;
 struct extension* ext_load(char* path) {
   acquire(&exttable.lock);
 
-  struct extension* e;
+  struct extension* ep;
 
   // Look for an unused extension
-  for (e = exttable.extensions; e < &exttable.extensions[NEXT]; e++) {
-    if (e->state == EXT_UNUSED) {
+  for (ep = exttable.extensions; ep < &exttable.extensions[NEXT]; ep++) {
+    if (ep->state == EXT_UNUSED) {
       goto found;
     }
   }
@@ -45,54 +46,48 @@ struct extension* ext_load(char* path) {
   
   // Initialize extension
   found:
-  e->state = EXT_LOADED;
-  e->hp = HP_none;
+  ep->state = EXT_LOADED;
+  ep->hp = HP_none;
   
   release(&exttable.lock);
  
   uint path_len = strlen(path);
-  if (path_len < sizeof(e->name)) {
-    safestrcpy(e->name, path, sizeof(e->name));
+  if (path_len < sizeof(ep->name)) {
+    safestrcpy(ep->name, path, sizeof(ep->name));
   } else {
-    safestrcpy(e->name, path + (path_len - sizeof(e->name) + 1), sizeof(e->name));
+    safestrcpy(ep->name, path + (path_len - sizeof(ep->name) + 1), sizeof(ep->name));
   }
   
   // This call updates n_ext
-  kload_elf(path, &n_ext, (void**)&e->entry);
+  kload_elf(path, &n_ext, ep);
 
-  return e;
+  cprintf("entry is at %p\n", ep->entry);
+
+  return ep;
 }
 
-void ext_attach(struct extension* e, enum hookpoint hp) {
-  extern unsigned char trampoline_call_start;
-  extern unsigned char trampoline_call_end;
-
+void ext_attach(struct extension* e) {
   acquire(&exttable.lock);
 
-  // `call trampoline` instruction as static data
-  asm volatile (
-    "jmp trampoline_call_end\n"
-    ".globl trampoline_call_start\n"
-    "trampoline_call_start:\n"
-    "call trampoline\n"
-    ".globl trampoline_call_end\n"
-    "trampoline_call_end:\n"
-    :
-    :
-    :);
-
+  enum hookpoint hp = e->hp;
+  cprintf("attach, hp %d\n", hp);
   unsigned char* hp_start = hptable[hp].start;
   unsigned char* hp_end = hptable[hp].end;
+
+  struct trampoline_call tc;
+  trampoline_call_for(hp, &tc);
+  unsigned char* trampoline_call_start = tc.start;
+  unsigned char* trampoline_call_end = tc.end;
    
   // Write call trampoline instruction to replace nops
-  memmove(hp_start, &trampoline_call_start, &trampoline_call_end - &trampoline_call_start);
+  memmove(hp_start, trampoline_call_start, trampoline_call_end - trampoline_call_start);
 
   // Recalculate the relative address of the trampoline function
-  int difference = &trampoline_call_end - hp_end;
+  int difference = trampoline_call_end - hp_end;
   int offset;
-  memmove(&offset, hp_start + 1, sizeof(offset));
+  memmove(&offset, hp_start + 2, sizeof(offset));
   offset += difference;
-  memmove(hp_start + 1, &offset, sizeof(offset));
+  memmove(hp_start + 2, &offset, sizeof(offset));
 
   e->state = EXT_ATTACHED;
   struct proc *currproc = myproc();
@@ -125,10 +120,12 @@ void ext_detach(struct extension* e) {
 
   acquire(&exttable.lock);
 
-  // nops
+  // FIXME: labels should be unique to hp?
   asm volatile (
     ".globl nops_start_label\n"
     "nops_start_label:\n"
+    "nop\n"
+    "nop\n"
     "nop\n"
     "nop\n"
     "nop\n"
@@ -154,22 +151,18 @@ void ext_detach(struct extension* e) {
   release(&exttable.lock);
 }
 
-void trampoline(void) {
-  struct proc *currproc = myproc();
-  struct namespace *currns = currproc->ns;
-
-  struct ns_object* ns_obj;
-  // TODO: figure out how to remove locking
-  // acquire(&currns->lock);
-  for (ns_obj = currns->namespaced_exts; ns_obj < &currns->namespaced_exts[N_NS_EXT]; ++ns_obj) {
-    void* p = ns_obj->pointer;
-    struct extension* e = (struct extension*)p;
-    if (e->state != EXT_ATTACHED) {
-      break;
+enum hookpoint check_hookpoint(char const* name) {
+  char const* names[] = {
+    [HP_getpid] = "getpid",
+    [HP_read] = "read",
+    [HP_exec] = "exec",
+    [HP_swtch] = "swtch",
+  };
+  uint name_len = strlen(name);
+  for (char const** n = names; n != names + (sizeof(names) / sizeof(names[0])); n++) {
+    if (strncmp(*n, name, name_len + 1) == 0) {
+      return (enum hookpoint)(n - names);
     }
-
-    e->entry();
   }
-  // release(&currns->lock);
+  panic("No %s hookpoint found\n");
 }
-
