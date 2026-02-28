@@ -34,13 +34,12 @@ int argkptr(int n, void** pp) {
 
 int sys_extattach(void) {
   struct extension* e;
-  int hp;
 
-  if (argkptr(0, (void**)&e) < 0 || argint(1, &hp) < 0) {
+  if (argkptr(0, (void**)&e) < 0) {
     return -1;
   }
 
-  ext_attach(e, (enum hookpoint)hp);
+  ext_attach(e);
   
   return 0;
 }

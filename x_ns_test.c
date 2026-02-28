@@ -10,7 +10,7 @@ int main(void) {
   // Attaching x1.ext to ns 0
   struct extension *e;
   extload("x1.ext", &e);
-  extattach(e, HP_exec);
+  extattach(e);
   char* args[] = { "true", 0 };
 
   if (fork() == 0) {
@@ -26,7 +26,7 @@ int main(void) {
     // Attaching x2.ext to ns 1
     struct extension *e2;
     extload("x2.ext", &e2);
-    extattach(e2, HP_exec);
+    extattach(e2);
 
     if (fork() == 0) {
       printf(1, "in child 2 ns is %d\n", getnsid());

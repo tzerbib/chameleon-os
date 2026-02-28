@@ -16,7 +16,7 @@ void run_all(struct extension* e) {
   printf(1, "[0] duration is %z (nops only)\n", end - start);
   
   // Attaching x3 to old ns
-  extattach(e, HP_getpid);
+  extattach(e);
   
   // All getpids below go to the trampoline and the extension
   start = rdtsc();

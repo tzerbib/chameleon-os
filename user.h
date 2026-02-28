@@ -27,7 +27,7 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
-int extattach(struct extension*, enum hookpoint);
+int extattach(struct extension*);
 int extload(char* p, struct extension**);
 int getnsid(void);
 int mkns(void);

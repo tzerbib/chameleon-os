@@ -23,7 +23,7 @@ int main(void) {
     // Attaching to old ns
     struct extension* e;
     extload("x3.ext", &e);
-    extattach(e, HP_getpid);
+    extattach(e);
     
     start = rdtsc();
     for (int i = 0; i < 10000; i++) {
