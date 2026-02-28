@@ -6,8 +6,14 @@
 # a struct context, and save its address in *old.
 # Switch stacks to new and pop previously-saved registers.
 
+#include "extensions.inc"
 .globl swtch
 swtch:
+  pushl %ebp
+  movl %esp, %ebp
+  nops_for swtch
+  popl %ebp
+
   movl 4(%esp), %eax
   movl 8(%esp), %edx
 

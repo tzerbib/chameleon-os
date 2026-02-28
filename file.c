@@ -2,6 +2,7 @@
 // File descriptors
 //
 
+#include "extensions.h"
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -96,6 +97,8 @@ filestat(struct file *f, struct stat *st)
 int
 fileread(struct file *f, char *addr, int n)
 {
+  EXT_HP_NOPS(read);
+  
   int r;
 
   if(f->readable == 0)

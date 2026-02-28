@@ -1,3 +1,4 @@
+#include "extensions.h"
 #include "types.h"
 #include "param.h"
 #include "memlayout.h"
@@ -10,6 +11,8 @@
 int
 exec(char *path, char **argv)
 {
+  EXT_HP_NOPS(exec);
+  
   char *s, *last;
   int i, off;
   uint argc, sz, sp, ustack[3+MAXARG+1];
