@@ -1,19 +1,38 @@
-#include "api/hookpoint.h"
 #include "types.h"
 #include "stat.h"
 #include "user.h"
 
-int
-main(void)
-{
-  printf(1, "hello from extension!\n");
-  struct extension *e;
-  extload("x3.ext", &e);
-  extattach(e, HP_getpid);
-  printf(1, "getpid %d\n", getpid());
-  printf(1, "e %p\n", e);
-  printf(1, "exiting user main\n");
-  extdetach(e);
-  printf(1, "getpid %d\n", getpid());
+// Example user program that loads and attaches extensions
+int main(void) {
+  
+  struct extension *e2;
+  if (extload("x2.ext", &e2) != 0) {
+    return 1;
+  }
+  extattach(e2);
+  printf(1, "x2 attached\n");
+
+  struct extension *e1;
+  if (extload("x1.ext", &e1) != 0) {
+    return 1;
+  }
+  extattach(e1);
+  printf(1, "x1 attached\n");
+
+  char* args[] = { "true", 0 };
+  exec("true", args);
+
+  // struct extension *e3;
+  // if (extload("x3.ext", &e3) != 0) {
+  //   printf(1, "extload x3 return non-zero\n");
+  //   return 1;
+  // }
+  // printf(1, "loaded x3\n");
+  // extattach(e3);
+  // printf(1, "after attaching x3\n");
+
+  // char* args[] = { "true", 0 };
+  // exec("true", args);
+
   exit();
 }
