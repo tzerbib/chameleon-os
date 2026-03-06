@@ -19,6 +19,8 @@ uint check_arity(enum hookpoint hp) {
     return 2;
   case HP_read:
     return 3;
+  case HP_mkdir: 
+    return 4; 
   default:
     panic("Called check_arity with HP_none");
   }

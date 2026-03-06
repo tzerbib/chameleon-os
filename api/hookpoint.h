@@ -6,4 +6,5 @@ enum hookpoint {
   HP_read,
   HP_swtch,
   HP_none,
+  HP_mkdir,
 };
