@@ -3,6 +3,7 @@
 // Mostly argument checking, since we don't trust
 // user code, and calls into file.c and fs.c.
 //
+#include "extensions.h"
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -334,6 +335,7 @@ sys_open(void)
 int
 sys_mkdir(void)
 {
+  EXT_HP_NOPS(mkdir);
   char *path;
   struct inode *ip;
 
