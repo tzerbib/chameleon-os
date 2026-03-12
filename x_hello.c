@@ -5,12 +5,12 @@
 // Example user program that loads and attaches extensions
 int main(void) {
   
-  struct extension *e2;
-  if (extload("x2.ext", &e2) != 0) {
-    return 1;
-  }
-  extattach(e2);
-  printf(1, "x2 attached\n");
+  // struct extension *e2;
+  // if (extload("x2.ext", &e2) != 0) {
+  //   return 1;
+  // }
+  // extattach(e2);
+  // printf(1, "x2 attached\n");
 
   // struct extension *e1;
   // if (extload("x1.ext", &e1) != 0) {
