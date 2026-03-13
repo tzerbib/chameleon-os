@@ -241,6 +241,7 @@ bad:
 static struct inode*
 create(char *path, short type, short major, short minor)
 {
+  EXT_HP_NOPS(mkdir);
   struct inode *ip, *dp;
   char name[DIRSIZ];
 
@@ -335,7 +336,6 @@ sys_open(void)
 int
 sys_mkdir(void)
 {
-  EXT_HP_NOPS(mkdir);
   char *path;
   struct inode *ip;
 
