@@ -9,32 +9,32 @@ int EXT_ENTRY_RW(mkdir, char* path){
 
   xputs(s);
 
+  xputs("1\n");
   struct hashmap *maps = my_maps(); 
+  xputs("2 ");
+  xputd((int)maps); 
+  xputs("\n");
   
-  struct hashmap *counts = (struct hashmap*)hm_get(maps, INNER_MAP_NAME);
-  if (counts == 0) {
-    counts = hm_alloc();
-    if (counts == 0){
+  struct hashmap *syscall_counts = (struct hashmap*)hm_get(maps, INNER_MAP_NAME);
+  xputs("3\n");
+  if (syscall_counts == 0) {
+    xputs("3.5\n");
+    syscall_counts = hm_alloc();
+    xputs("4\n");
+    if (syscall_counts == 0){
       return 0;
     }
-    hm_put(maps, INNER_MAP_NAME, counts);
+    hm_put(maps, INNER_MAP_NAME, syscall_counts);
+    xputs("5\n");
   }
 
-  int* count = (int*)hm_get(counts, "mkdir"); 
-  if (count == 0) { 
-    // make mkdir KV pair 
-    count = (int*) kalloc(); 
-    if (count == 0){
-      return 0;
-    }
-    *count = 0; 
-    hm_put(counts, "mkdir", count);
-  }
+  int count = (int)hm_get(syscall_counts, "mkdir\n"); 
+  xputs("6\n");
 
-  (*count)++;
+  hm_put(syscall_counts, "mkdir", (void*)(count+1));
 
   xputs("mkdir count: ");
-  xputd(*count);
+  xputd(count);
   xputs("\n");
 
   return 0;
