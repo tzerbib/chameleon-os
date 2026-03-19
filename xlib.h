@@ -10,6 +10,16 @@ void xputd(int);
 void xputx(int);
 int mypid(void);
 
+struct hashmap; // assuming  we're not accessing internals of hm 
+typedef void(*hm_iter_fn)(const char*, void*, void*);
+
+struct hashmap* hm_alloc(void);
+void            hm_free(struct hashmap*);
+int             hm_put(struct hashmap*, const char*, void*);
+void*           hm_get(struct hashmap*, const char*);
+int             hm_del(struct hashmap*, const char*);
+void            hm_iter(struct hashmap*, hm_iter_fn, void*);
+
 #define EXT_ENTRY_RO(name, args...) \
 ____roext_at_##name(args)
 

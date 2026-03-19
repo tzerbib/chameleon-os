@@ -19,6 +19,12 @@ function_t xtable[] = {
   [1] = (function_t)kfree,
   [2] = (function_t)cprintf,
   [3] = (function_t)mypid,
+  [4] = (function_t)hm_alloc,
+  [5] = (function_t)hm_free,
+  [6] = (function_t)hm_put,
+  [7] = (function_t)hm_get,
+  [8] = (function_t)hm_del,
+  [9] = (function_t)hm_iter,
 };
 
 struct {
