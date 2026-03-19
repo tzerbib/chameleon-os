@@ -29,5 +29,6 @@ struct namespace {
 	// points to only extensions in the namespace
 	struct ns_object namespaced_exts[N_NS_EXT];
 	enum slot_state slot_state;
+	struct hashmap *maps;
 };
 
