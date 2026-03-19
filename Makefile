@@ -34,6 +34,7 @@ OBJS = \
 	sysns.o\
 	hookpoints.o\
 	trampoline.o\
+	hashmap.o\
 
 # Cross-compiling (e.g., on Mac OS X)
 TOOLPREFIX = i686-elf-
