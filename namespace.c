@@ -94,12 +94,13 @@ int namespaceinit(void) {
 	}
 
 	// Then mark the global namespace at 0
-	{
-		struct namespace *ns = &namespace_table.namespaces[0];
-		acquire(&ns->lock);
-		ns->slot_state = TAKEN;
-		release(&ns->lock);
-	}
+	// {
+	// 	struct namespace *ns = &namespace_table.namespaces[0];
+	// 	acquire(&ns->lock);
+	// 	ns->slot_state = TAKEN;
+	// 	release(&ns->lock);
+	// }
+	create_ns();
 	return 0;
 }
 

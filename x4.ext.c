@@ -1,18 +1,14 @@
 #include "xlib.h"
 
-char* s = "hi from x4!\n";
 char* INNER_MAP_NAME = "syscall_counts";
 
 // Example read/write extension at mkdir hookpoint
 // trying to do something like count how many times mkdir is called
-int EXT_ENTRY_RW(mkdir, char* path){
-
-  xputs(s);
-
+int EXT_ENTRY_RO(mkdir, char const* path){
   xputs("1\n");
   struct hashmap *maps = my_maps(); 
   xputs("2 ");
-  xputd((int)maps); 
+  xputx((int)maps); 
   xputs("\n");
   
   struct hashmap *syscall_counts = (struct hashmap*)hm_get(maps, INNER_MAP_NAME);

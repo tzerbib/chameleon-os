@@ -45,6 +45,6 @@ int EXT_ENTRY_RO(swtch, struct context const* const*, struct context const*);
 
 // Read/write
 int EXT_ENTRY_RW(exec, char* path, char** argv);
-int EXT_ENTRY_RW(mkdir, char* path);
+int EXT_ENTRY_RO(mkdir, char const* path);
 
 #endif // XLIB_H
