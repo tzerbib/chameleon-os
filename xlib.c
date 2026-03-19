@@ -23,6 +23,10 @@ void xputx(int i) {
   ((printf_t*)((function_t*)XTABLE_ADDR)[2])("%x", i);
 }
 
+int mypid() {
+  return ((typeof(mypid)*)((function_t*)XTABLE_ADDR)[3])();
+}
+
 struct hashmap* hm_alloc(void) {
   return ((typeof(hm_alloc)*)((function_t*)XTABLE_ADDR)[4])();
 }
@@ -47,6 +51,6 @@ void hm_iter(struct hashmap* hm, hm_iter_fn fn, void* arg) {
   ((typeof(hm_iter)*)((function_t*)XTABLE_ADDR)[9])(hm, fn, arg);
 }
 
-int mypid() {
-  return ((typeof(mypid)*)((function_t*)XTABLE_ADDR)[3])();
+struct hashmap* my_maps() {
+  return ((typeof(my_maps)*)((function_t*)XTABLE_ADDR)[10])();
 }

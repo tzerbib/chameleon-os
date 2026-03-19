@@ -8,9 +8,14 @@
 #include "namespace.h"
 #include "api/hookpoint.h"
 #include "hookpoints.h"
+#include "namespace.h"
 
 int mypid(void) {
   return myproc()->pid;
+}
+
+struct hashmap* my_maps(void) { 
+  return myproc()->ns->maps; 
 }
 
 typedef void(*function_t)(void);
@@ -25,6 +30,7 @@ function_t xtable[] = {
   [7] = (function_t)hm_get,
   [8] = (function_t)hm_del,
   [9] = (function_t)hm_iter,
+  [10] = (function_t)my_maps, 
 };
 
 struct {

@@ -10,6 +10,9 @@ void xputd(int);
 void xputx(int);
 int mypid(void);
 
+struct namespace;
+struct hashmap* my_maps(void); 
+
 struct hashmap; // assuming  we're not accessing internals of hm 
 typedef void(*hm_iter_fn)(const char*, void*, void*);
 
