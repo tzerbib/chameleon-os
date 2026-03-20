@@ -29,6 +29,7 @@ OBJS = \
 	uart.o\
 	vectors.o\
 	vm.o\
+	stack.o\
 
 NET_OBJS = \
 	arp.o\
@@ -44,6 +45,7 @@ NET_OBJS = \
 	syssocket.o\
 	tcp.o\
 	udp.o\
+	ethernet_vlan.o\
 
 OBJS += $(NET_OBJS)
 
@@ -98,6 +100,7 @@ OBJDUMP = $(TOOLPREFIX)objdump
 CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -Os -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -Wno-unused-variable -Wno-unused-function -Wno-address-of-packed-member
 # TODO: fix array bound issue?
 CFLAGS += -Wno-array-bounds -Wno-infinite-recursion
+# CFLAGS += -DDEBUG
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 ASFLAGS = -m32 -gdwarf-2 -Wa,-divide
 # FreeBSD ld wants ``elf_i386_fbsd''
@@ -324,9 +327,7 @@ docker-run:
 	docker run -it --name xv6-net --rm --device=/dev/net/tun --cap-add=NET_ADMIN xv6-net make run
 
 run: xv6.img fs.img
-	ip tuntap add mode tap name tap0
-	ip addr add 172.16.100.1/24 dev tap0
-	ip link set tap0 up
+	./ip_config.sh
 	$(QEMU) -nographic $(QEMUOPTS)
 
 .PHONY: dist-test dist docker-build docker-run run
