@@ -103,13 +103,26 @@ extern int sys_unlink(void);
 extern int sys_wait(void);
 extern int sys_write(void);
 extern int sys_uptime(void);
+
+extern int sys_ioctl(void);
+extern int sys_socket(void);
+extern int sys_connect(void);
+extern int sys_bind(void);
+extern int sys_listen(void);
+extern int sys_accept(void);
+extern int sys_recv(void);
+extern int sys_send(void);
+extern int sys_recvfrom(void);
+extern int sys_sendto(void);
+
 extern int sys_extattach(void);
+extern int sys_extdetach(void);
 extern int sys_extload(void);
+
 extern int sys_getnsid(void);
 extern int sys_mkns(void);
 extern int sys_chns(void);
 extern int sys_rmns(void);
-extern int sys_extdetach(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork] = sys_fork,
@@ -133,6 +146,16 @@ static int (*syscalls[])(void) = {
 [SYS_link] = sys_link,
 [SYS_mkdir] = sys_mkdir,
 [SYS_close] = sys_close,
+[SYS_ioctl] = sys_ioctl,
+[SYS_socket] = sys_socket,
+[SYS_connect] = sys_connect,
+[SYS_bind] = sys_bind,
+[SYS_listen] = sys_listen,
+[SYS_accept] = sys_accept,
+[SYS_recv] = sys_recv,
+[SYS_send] = sys_send,
+[SYS_recvfrom] = sys_recvfrom,
+[SYS_sendto] = sys_sendto,
 [SYS_extattach] = sys_extattach,
 [SYS_extload] = sys_extload,
 [SYS_getnsid] = sys_getnsid,
@@ -140,6 +163,7 @@ static int (*syscalls[])(void) = {
 [SYS_chns] = sys_chns,
 [SYS_rmns] = sys_rmns,
 [SYS_extdetach] = sys_extdetach,
+
 };
 
 void

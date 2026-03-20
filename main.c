@@ -1,3 +1,4 @@
+#include "ethernet_vlan.h"
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -31,6 +32,10 @@ main(void)
   binit();         // buffer cache
   fileinit();      // file table
   ideinit();       // disk 
+  pciinit();       // pci devices
+  vlanstackinit(); // vlan stack
+  globalnsinit();  // global namespace init (dummy rn)
+  netinit();       // networking
   startothers();   // start other processors
   kinit2(P2V(4*1024*1024), P2V(PHYSTOP)); // must come after startothers()
   namespaceinit(); // first namespace

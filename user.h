@@ -3,6 +3,7 @@
 
 struct stat;
 struct rtcdate;
+struct sockaddr;
 struct extension;
 
 // system calls
@@ -27,13 +28,29 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+
+// network
+int ioctl(int, int, ...);
+int socket(int, int, int);
+int connect(int, struct sockaddr*, int);
+int bind(int, struct sockaddr*, int);
+int listen(int, int);
+int accept(int, struct sockaddr*, int*);
+int recv(int, char*, int);
+int send(int, char*, int);
+int recvfrom(int, char*, int, struct sockaddr*, int*);
+int sendto(int, char*, int, struct sockaddr*, int);
+
+// extension
 int extattach(struct extension*);
 int extload(char* p, struct extension**);
+int extdetach(struct extension*);
+
+// namespace
 int getnsid(void);
 int mkns(void);
 int chns(int);
 int rmns(int);
-int extdetach(struct extension*);
 
 // ulib.c
 int stat(const char*, struct stat*);
@@ -48,6 +65,18 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
+
+// additional functions
+void hexdump(void *data, size_t size);
+uint16_t hton16(uint16_t h);
+uint16_t ntoh16(uint16_t n);
+uint32_t hton32(uint32_t h);
+uint32_t ntoh32(uint32_t n);
+long strtol(const char *s, char **endptr, int base);
+int ip_addr_pton(const char *p, ip_addr_t *n);
+
+#define IP_ADDR_LEN 4
+#define IP_ADDR_STR_LEN 16 /* "ddd.ddd.ddd.ddd\0" */
 
 static inline uint64 rdtsc(void) {
   uint cycles_high;
