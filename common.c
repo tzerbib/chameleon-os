@@ -9,7 +9,7 @@
 #define isprint(x) ((x >= 0x20) && (x <= 0x7e))
 
 void
-hexdump(void *data, size_t size)
+hexdump(void const*data, size_t size)
 {
     int offset, index;
     unsigned char *src;

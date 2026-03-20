@@ -1,3 +1,5 @@
+#pragma once
+
 typedef unsigned int   uint;
 typedef unsigned short ushort;
 typedef unsigned char  uchar;
@@ -50,9 +52,6 @@ typedef uint pde_t;
 #define NULL ((void*) 0)
 #endif
 
-// Represents true-or-false values
-typedef _Bool bool;
-enum { false, true };
 
 // Explicitly-sized versions of integer types
 typedef __signed char int8_t;

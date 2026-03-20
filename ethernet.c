@@ -33,7 +33,7 @@ ethernet_addr_pton(const char *p, uint8_t *n)
     return  0;
 }
 
-static const char *
+const char *
 ethernet_type_ntoa(uint16_t type)
 {
     switch (ntoh16(type)) {

@@ -240,7 +240,7 @@ int             arp_resolve(struct netif *netif, const ip_addr_t *pa, uint8_t *h
 int             arp_init(void);
 
 // common.c
-void            hexdump(void *data, size_t size);
+void            hexdump(void const *data, size_t size);
 uint16_t        hton16(uint16_t h);
 uint16_t        ntoh16(uint16_t n);
 uint32_t        hton32(uint32_t h);
@@ -257,6 +257,7 @@ void            e1000intr(void);
 
 // ethernet.c
 int             ethernet_addr_pton(const char *p, uint8_t *n);
+const char*     ethernet_type_ntoa(uint16_t type);
 char *          ethernet_addr_ntop(const uint8_t *n, char *p, size_t size);
 ssize_t         ethernet_rx_helper(struct netdev *dev, uint8_t *frame, size_t flen, void (*cb)(struct netdev*, uint16_t, uint8_t*, size_t));
 ssize_t         ethernet_tx_helper(struct netdev *dev, uint16_t type, const uint8_t *payload, size_t plen, const void *dst, ssize_t (*cb)(struct netdev*, uint8_t*, size_t));
