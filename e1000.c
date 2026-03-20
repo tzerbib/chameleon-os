@@ -1,6 +1,8 @@
 // Copyright (c) 2012-2020 YAMAMOTO Masaya
 // SPDX-License-Identifier: MIT
 
+#include "ethernet_vlan.h"
+#include "stack.h"
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -186,7 +188,9 @@ e1000_tx_cb(struct netdev *netdev, uint8_t *data, size_t len)
 static ssize_t
 e1000_tx(struct netdev *dev, uint16_t type, const uint8_t *packet, size_t len, const void *dst)
 {
-    return ethernet_tx_helper(dev, type, packet, len, dst, e1000_tx_cb);
+    // TODO: logic on which to call?
+    return ethernet_vlan_tx_helper(dev, type, packet, len, dst, e1000_tx_cb);
+    // return ethernet_tx_helper(dev, type, packet, len, dst, e1000_tx_cb);
 }
 
 static void
@@ -218,7 +222,32 @@ e1000_rx(struct e1000 *dev)
 #ifdef DEBUG
             cprintf("[e1000] %s: %u bytes data received\n", dev->netdev->name, desc->length);
 #endif
-            ethernet_rx_helper(dev->netdev, P2V((uint32_t)desc->addr), desc->length, netdev_receive);
+            void* frame = P2V((uint32_t)desc->addr);
+            size_t flen = desc->length;
+            // TODO: clean up
+            if (is_vlan_tagged(frame)) {
+                struct ethernet_hdr_vlan* hdr = (struct ethernet_hdr_vlan*)frame;
+                if (memcmp(dev->netdev->addr, hdr->dst, ETHERNET_ADDR_LEN) != 0) {
+                    if (memcmp(ETHERNET_ADDR_BROADCAST, hdr->dst, ETHERNET_ADDR_LEN) != 0) {
+                        break;
+                    }
+                }
+                uint16_t vid = get_vid(frame);
+                #ifdef DEBUG
+                ethernet_vlan_dump(dev->netdev, frame, flen);
+                cprintf("vid: %u\n", vid);
+                #endif
+                if (stack_push(&vlan_stack, vid) == -1) {
+                    panic("Push to vlan_stack failed");
+                }
+                frame = shift_hdr_head(frame);
+                flen = flen - sizeof(struct vlan_hdr);
+                ethernet_rx_helper(dev->netdev, frame, flen, netdev_receive);
+                stack_pop(&vlan_stack);
+                current_tenant = vid;
+                break;
+            }
+            ethernet_rx_helper(dev->netdev, frame, flen, netdev_receive);
         } while (0);
         desc->status = (uint16_t)(0);
         e1000_reg_write(dev, E1000_RDT, tail);
