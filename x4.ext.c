@@ -24,13 +24,13 @@ int EXT_ENTRY_RO(mkdir, char const* path){
     xputs("5\n");
   }
 
-  int count = (int)hm_get(syscall_counts, "mkdir\n"); 
+  int count = (int)hm_get(syscall_counts, "mkdir"); 
   xputs("6\n");
 
   hm_put(syscall_counts, "mkdir", (void*)(count+1));
 
   xputs("mkdir count: ");
-  xputd(count);
+  xputd((int)hm_get(syscall_counts, "mkdir"));
   xputs("\n");
 
   return 0;
