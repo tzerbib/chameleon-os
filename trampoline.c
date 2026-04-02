@@ -105,7 +105,7 @@ struct context_exec {
   char const* const* args;
 };
 
-void build_context_exec(uint const* ebp, struct context_exec* ctx) {
+static void build_context_exec(uint const* ebp, struct context_exec* ctx) {
   ctx->path = (typeof(ctx->path)) ebp[2];
   ctx->args = (typeof(ctx->args)) ebp[3];
 }

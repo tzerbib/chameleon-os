@@ -96,7 +96,7 @@ printf(int fd, const char *fmt, ...)
       } else if(c == '%'){
         putc(fd, c);
       } else if (c == 'z') {
-         uint64* temp = (uint64*)ap;
+        uint64* temp = (uint64*)ap;
         printf(fd, "[u64]");
         ap = (uint*)temp;
       } else {

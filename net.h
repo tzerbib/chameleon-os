@@ -2,6 +2,7 @@
 #define NETDEV_TYPE_SLIP      (0x0002)
 
 #include "if.h"
+#include "types.h"
 
 #define NETDEV_FLAG_BROADCAST IFF_BROADCAST
 #define NETDEV_FLAG_MULTICAST IFF_MULTICAST
