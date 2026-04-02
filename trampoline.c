@@ -17,6 +17,8 @@ uint check_arity(enum hookpoint hp) {
   case HP_swtch:
   case HP_exec:
     return 2;
+  case HP_arprx:
+  case HP_iprx:
   case HP_read:
     return 3;
   default:

@@ -7,6 +7,7 @@
 #include "net.h"
 #include "ethernet.h"
 #include "ip.h"
+#include "extensions.h"
 
 #define IP_VERSION_IPV4 4
 
@@ -270,6 +271,8 @@ ip_netif_by_peer (ip_addr_t *peer) {
 
 static void
 ip_rx (uint8_t *dgram, size_t dlen, struct netdev *dev) {
+    EXT_HP_NOPS(iprx);
+
     struct ip_hdr *hdr;
     uint16_t hlen, offset;
     struct netif_ip *iface;

@@ -1,6 +1,7 @@
 // Copyright (c) 2012-2020 YAMAMOTO Masaya
 // SPDX-License-Identifier: MIT
 
+#include "extensions.h"
 #include "types.h"
 #include "defs.h"
 #include "spinlock.h"
@@ -220,6 +221,8 @@ arp_send_reply (struct netif *netif, const uint8_t *tha, const ip_addr_t *tpa, c
 
 static void
 arp_rx (uint8_t *packet, size_t plen, struct netdev *dev) {
+    EXT_HP_NOPS(arprx);
+
     struct arp_ethernet *message;
     time_t now;
     int marge = 0;
