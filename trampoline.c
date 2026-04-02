@@ -43,7 +43,7 @@ uint check_arity(enum hookpoint hp) {
     "trampoline" #arity "_call_end:\n"\
     :\
     :\
-    :);
+    : "rax", "rcx", "rdx", "cc", "memory");
 
 #define TRAMPOLINE_CASE(arity)\
   case arity:\

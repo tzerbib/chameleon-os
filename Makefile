@@ -104,7 +104,7 @@ AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
-CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -Os -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -Wno-stringop-overflow -Wno-unused-variable -Wno-unused-function -Wno-address-of-packed-member
+CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -Wno-stringop-overflow -Wno-unused-variable -Wno-unused-function -Wno-address-of-packed-member
 # TODO: fix array bound issue?
 CFLAGS += -Wno-array-bounds -Wno-infinite-recursion
 CFLAGS += --std=gnu23
