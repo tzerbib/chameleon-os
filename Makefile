@@ -224,6 +224,7 @@ UPROGS=\
 	_x_ns_test\
 	_x_time\
 	_x_time_1\
+	_net_exts\
 	$(UEXTS)
 
 NET_UPROGS=\
@@ -316,6 +317,7 @@ EXTRA=\
 	x_ns_test.c\
 	x_time.c\
 	x_time_1.c\
+	net_exts.c\
 
 dist:
 	rm -rf dist
