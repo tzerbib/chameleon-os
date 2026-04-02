@@ -12,10 +12,9 @@
 #define VID_BITMASK ((1 << 12) - 1)
 #define PCP_SHIFT 9
 
-// TODO: These may be moved to extension.h after merge 
+// TODO: Follwoing may be moved to extension.h?
 extern struct stack vlan_stack;
-// ... and the following would be the running namespace
-extern uint16_t current_tenant;
+
 void vlanstackinit();
 
 struct vlan_hdr {
@@ -32,7 +31,6 @@ struct ethernet_hdr_vlan {
   uint16_t type;
 };
 
-void globalnsinit();
 int is_vlan_tagged(uint8_t const* frame);
 void ethernet_vlan_dump(struct netdev *dev, uint8_t const *frame, size_t flen);
 uint8_t* shift_hdr_head(uint8_t* frame);

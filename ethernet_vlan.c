@@ -3,16 +3,12 @@
 #include "defs.h"
 #include "net.h"
 #include "stack.h"
-
-// TODO: this is just for demo purposes
-//  will get merged with namespace
-uint16_t current_tenant;
+#include "types.h"
+#include "mmu.h"
+#include "param.h"
+#include "proc.h"
 
 struct stack vlan_stack;
-
-void globalnsinit() {
-    current_tenant = 0;
-}
 
 void vlanstackinit() {
     stack_init(&vlan_stack);
@@ -85,10 +81,12 @@ ssize_t ethernet_vlan_tx_helper(struct netdev *dev, uint16_t type, const uint8_t
 
     uint16_t* tci_ptr = (uint16_t*)(&hdr->vlan) + 1;
     // TODO: this assumes pcp and dei are both 0s
-    // TODO: this needs changing after merge ofc
-    uint16_t vid = current_tenant;
-    if (current_tenant == 0) {
+    uint16_t vid;
+    struct proc *currproc = myproc();
+    if (currproc == 0) {
         vid = stack_top(&vlan_stack);
+    } else {
+        vid = get_nsid(currproc->ns);
     }
 #ifdef DEBUG
     cprintf("tx vid: %u\n", vid);

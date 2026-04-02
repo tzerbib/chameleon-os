@@ -244,7 +244,6 @@ e1000_rx(struct e1000 *dev)
                 flen = flen - sizeof(struct vlan_hdr);
                 ethernet_rx_helper(dev->netdev, frame, flen, netdev_receive);
                 stack_pop(&vlan_stack);
-                current_tenant = vid;
                 break;
             }
             ethernet_rx_helper(dev->netdev, frame, flen, netdev_receive);
