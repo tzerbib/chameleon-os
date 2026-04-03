@@ -8,6 +8,7 @@
 #include "namespace.h"
 #include "extensions.h"
 #include "trampoline.h"
+#include "ethernet_vlan.h"
 
 
 uint check_arity(enum hookpoint hp) {
@@ -17,6 +18,8 @@ uint check_arity(enum hookpoint hp) {
   case HP_swtch:
   case HP_exec:
     return 2;
+  case HP_arprx:
+  case HP_iprx:
   case HP_read:
     return 3;
   case HP_mkdir: 
@@ -42,7 +45,7 @@ uint check_arity(enum hookpoint hp) {
     "trampoline" #arity "_call_end:\n"\
     :\
     :\
-    :);
+    : "rax", "rcx", "rdx", "cc", "memory");
 
 #define TRAMPOLINE_CASE(arity)\
   case arity:\
@@ -104,7 +107,7 @@ struct context_exec {
   char const* const* args;
 };
 
-void build_context_exec(uint const* ebp, struct context_exec* ctx) {
+static void build_context_exec(uint const* ebp, struct context_exec* ctx) {
   ctx->path = (typeof(ctx->path)) ebp[2];
   ctx->args = (typeof(ctx->args)) ebp[3];
 }
@@ -118,7 +121,19 @@ void build_context_exec(uint const* ebp, struct context_exec* ctx) {
 #define TRAMPOLINE(arity)\
   void trampoline##arity(uint const* ebp [[maybe_unused]]) {\
     struct proc *currproc = myproc();\
-    struct namespace *currns = currproc->ns;\
+    struct namespace *currns;\
+    if (currproc == 0) {\
+      /* TODO: the ns is dependent on vid or something else */\
+      uint16_t vid = stack_top(&vlan_stack);\
+      /* TODO: maybe change nsid to uint16 */\
+      currns = get_ns((int)vid);\
+      if (currns == 0) {\
+        /* No ns created for the vid*/\
+        return;\
+      }\
+    } else {\
+      currns = currproc->ns;\
+    }\
     struct ns_object* ns_obj;\
     unsigned char* ret_addr;\
     asm volatile (\
@@ -132,6 +147,9 @@ void build_context_exec(uint const* ebp, struct context_exec* ctx) {
     /* TODO: Build context here depending on trigger */\
     for (ns_obj = currns->namespaced_exts; ns_obj < &currns->namespaced_exts[N_NS_EXT]; ++ns_obj) {\
       void* p = ns_obj->pointer;\
+      if (ns_obj->kind == NONE) {\
+        break;\
+      }\
       struct extension* e = (struct extension*)p;\
       /* TODO: conditions here need rethinking for detachment */\
       if (e->state != EXT_ATTACHED) {\

@@ -15,6 +15,8 @@ void ext_attach(struct extension* e);
 void ext_detach(struct extension* e);
 enum hookpoint check_hookpoint(char const* name);
 
+// TODO: think about register clobber performance impact on 
+// hookpoints without extensions attached??
 #define EXT_HP_NOPS(hp)\
   asm volatile (\
     ".globl sys_"#hp"_nop_start\n"\
@@ -30,4 +32,4 @@ enum hookpoint check_hookpoint(char const* name);
     "sys_"#hp"_nop_end:\n"\
     : \
     : \
-    :);
+    : "rax", "rcx", "rdx", "cc", "memory");

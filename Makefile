@@ -12,8 +12,10 @@ OBJS = \
 	log.o\
 	main.o\
 	mp.o\
+	pci.o\
 	picirq.o\
 	pipe.o\
+	printfmt.o\
 	proc.o\
 	sleeplock.o\
 	spinlock.o\
@@ -35,9 +37,28 @@ OBJS = \
 	hookpoints.o\
 	trampoline.o\
 	hashmap.o\
+	stack.o\
+
+NET_OBJS = \
+	arp.o\
+	common.o\
+	e1000.o\
+	ethernet.o\
+	icmp.o\
+	ip.o\
+	mt19937ar.o\
+	net.o\
+	socket.o\
+	sysnet.o\
+	syssocket.o\
+	tcp.o\
+	udp.o\
+	ethernet_vlan.o\
+
+OBJS += $(NET_OBJS)
 
 # Cross-compiling (e.g., on Mac OS X)
-TOOLPREFIX = i686-elf-
+# TOOLPREFIX = i686-elf-
 
 # Using native tools (e.g., on X86 Linux)
 # TOOLPREFIX = i686-linux-gnu-
@@ -84,7 +105,11 @@ AS = $(TOOLPREFIX)gas
 LD = $(TOOLPREFIX)ld
 OBJCOPY = $(TOOLPREFIX)objcopy
 OBJDUMP = $(TOOLPREFIX)objdump
-CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -Wno-array-bounds -Wno-stringop-overflow
+CFLAGS = -fno-pic -static -fno-builtin -fno-strict-aliasing -O2 -Wall -MD -ggdb -m32 -Werror -fno-omit-frame-pointer -Wno-stringop-overflow -Wno-unused-variable -Wno-unused-function -Wno-address-of-packed-member
+# TODO: fix array bound issue?
+CFLAGS += -Wno-array-bounds -Wno-infinite-recursion
+CFLAGS += --std=gnu23
+# CFLAGS += -DDEBUG
 CFLAGS += $(shell $(CC) -fno-stack-protector -E -x c /dev/null >/dev/null 2>&1 && echo -fno-stack-protector)
 ASFLAGS = -m32 -gdwarf-2 -Wa,-divide
 # FreeBSD ld wants ``elf_i386_fbsd''
@@ -97,6 +122,8 @@ endif
 ifneq ($(shell $(CC) -dumpspecs 2>/dev/null | grep -e '[^f]nopie'),)
 CFLAGS += -fno-pie -nopie
 endif
+
+GCC_LIB := $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 
 xv6.img: bootblock kernel
 	dd if=/dev/zero of=xv6.img count=10000
@@ -129,7 +156,7 @@ initcode: initcode.S
 	$(OBJDUMP) -S initcode.o > initcode.asm
 
 kernel: $(OBJS) entry.o entryother initcode kernel.ld
-	$(LD) $(LDFLAGS) -T kernel.ld -o kernel entry.o $(OBJS) -b binary initcode entryother
+	$(LD) $(LDFLAGS) -T kernel.ld -o kernel entry.o $(OBJS) $(GCC_LIB) -b binary initcode entryother
 	$(OBJDUMP) -S kernel > kernel.asm
 	$(OBJDUMP) -t kernel | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > kernel.sym
 
@@ -154,7 +181,7 @@ vectors.S: vectors.pl
 ULIB = ulib.o usys.o printf.o umalloc.o
 
 _%: %.o $(ULIB) xtable.h
-	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^
+	$(LD) $(LDFLAGS) -N -e main -Ttext 0 -o $@ $^ $(LDPOSTFLAGS)
 	$(OBJDUMP) -S $@ > $*.asm
 	$(OBJDUMP) -t $@ | sed '1,/SYMBOL TABLE/d; s/ .* / /; /^$$/d' > $*.sym
 
@@ -165,7 +192,7 @@ _forktest: forktest.o $(ULIB)
 	$(OBJDUMP) -S _forktest > forktest.asm
 
 mkfs: mkfs.c fs.h
-	gcc -Werror -Wall -o mkfs mkfs.c
+	gcc -Werror -Wall -DBUILD_MKFS -o mkfs mkfs.c
 
 # Prevent deletion of intermediate files, e.g. cat.o, after first build, so
 # that disk image changes after first build are persistent until clean.  More
@@ -198,14 +225,22 @@ UPROGS=\
 	_x_ns_test\
 	_x_time\
 	_x_time_1\
+	_net_exts\
 	$(UEXTS)
+
+NET_UPROGS=\
+	_ifconfig\
+	_tcpechoserver\
+	_udpechoserver\
+
+UPROGS += $(NET_UPROGS)
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)
 
 -include *.d
 
-clean:
+clean: 
 	rm -f *.tex *.dvi *.idx *.aux *.log *.ind *.ilg \
 	*.o *.d *.asm *.sym vectors.S bootblock entryother \
 	initcode initcode.out kernel xv6.img fs.img kernelmemfs \
@@ -239,7 +274,11 @@ QEMUGDB = $(shell if $(QEMU) -help | grep -q '^-gdb'; \
 ifndef CPUS
 CPUS := 2
 endif
-QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA)
+
+QEMUNET = -netdev user,id=n1,hostfwd=udp::10007-:7,hostfwd=tcp::10007-:7 -device e1000,netdev=n1 -object filter-dump,id=f1,netdev=n1,file=n1.pcap \
+          -netdev tap,id=n2,ifname=tap0 -device e1000,netdev=n2 -object filter-dump,id=f2,netdev=n2,file=n2.pcap
+
+QEMUOPTS = -drive file=fs.img,index=1,media=disk,format=raw -drive file=xv6.img,index=0,media=disk,format=raw -smp $(CPUS) -m 512 $(QEMUEXTRA) $(QEMUNET)
 
 qemu: fs.img xv6.img
 	$(QEMU) -serial mon:stdio $(QEMUOPTS)
@@ -279,6 +318,7 @@ EXTRA=\
 	x_ns_test.c\
 	x_time.c\
 	x_time_1.c\
+	net_exts.c\
 
 dist:
 	rm -rf dist
@@ -309,7 +349,25 @@ tar:
 	cp dist/* dist/.gdbinit.tmpl /tmp/xv6
 	(cd /tmp; tar cf - xv6) | gzip >xv6-rev10.tar.gz  # the next one will be 10 (9/17)
 
-.PHONY: dist-test dist
+docker-build:
+	docker build -t xv6-net .
+
+docker-run:
+	docker run -it --name xv6-net --rm --device=/dev/net/tun --cap-add=NET_ADMIN xv6-net make run
+
+docker-debug:
+	docker run -it --name xv6-net --rm --device=/dev/net/tun --cap-add=NET_ADMIN xv6-net make run-gdb
+
+run: xv6.img fs.img
+	./ip_config.sh
+	$(QEMU) -nographic $(QEMUOPTS)
+
+run-gdb: fs.img xv6.img .gdbinit
+	@echo "*** Now run 'gdb'." 1>&2
+	./ip_config.sh
+	$(QEMU) -nographic $(QEMUOPTS) -S $(QEMUGDB)
+
+.PHONY: dist-test dist docker-build docker-run run
 
 .PHONY: extensions
 extensions: $(UEXTS)

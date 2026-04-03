@@ -170,6 +170,8 @@ enum hookpoint check_hookpoint(char const* name) {
     [HP_exec] = "exec",
     [HP_swtch] = "swtch",
     [HP_mkdir] = "mkdir", 
+    [HP_arprx] = "arprx",
+    [HP_iprx] = "iprx",
   };
   uint name_len = strlen(name);
   for (char const** n = names; n != names + (sizeof(names) / sizeof(names[0])); n++) {
