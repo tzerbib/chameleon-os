@@ -3,7 +3,7 @@
 // Mostly argument checking, since we don't trust
 // user code, and calls into file.c and fs.c.
 //
-
+#include "extensions.h"
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -242,6 +242,7 @@ bad:
 static struct inode*
 create(char *path, short type, short major, short minor)
 {
+  EXT_HP_NOPS(mkdir);
   struct inode *ip, *dp;
   char name[DIRSIZ];
 

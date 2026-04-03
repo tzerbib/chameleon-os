@@ -36,6 +36,7 @@ OBJS = \
 	sysns.o\
 	hookpoints.o\
 	trampoline.o\
+	hashmap.o\
 	stack.o\
 
 NET_OBJS = \

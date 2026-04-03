@@ -8,9 +8,14 @@
 #include "namespace.h"
 #include "api/hookpoint.h"
 #include "hookpoints.h"
+#include "namespace.h"
 
 int mypid(void) {
   return myproc()->pid;
+}
+
+struct hashmap* my_maps(void) { 
+  return myproc()->ns->maps; 
 }
 
 typedef void(*function_t)(void);
@@ -19,6 +24,13 @@ function_t xtable[] = {
   [1] = (function_t)kfree,
   [2] = (function_t)cprintf,
   [3] = (function_t)mypid,
+  [4] = (function_t)hm_alloc,
+  [5] = (function_t)hm_free,
+  [6] = (function_t)hm_put,
+  [7] = (function_t)hm_get,
+  [8] = (function_t)hm_del,
+  [9] = (function_t)hm_iter,
+  [10] = (function_t)my_maps, 
 };
 
 struct {
@@ -157,6 +169,7 @@ enum hookpoint check_hookpoint(char const* name) {
     [HP_read] = "read",
     [HP_exec] = "exec",
     [HP_swtch] = "swtch",
+    [HP_mkdir] = "mkdir", 
     [HP_arprx] = "arprx",
     [HP_iprx] = "iprx",
   };

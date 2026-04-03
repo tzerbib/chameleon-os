@@ -1,6 +1,7 @@
 struct buf;
 struct context;
 struct file;
+struct hashmap;
 struct inode;
 struct pipe;
 struct proc;
@@ -209,6 +210,14 @@ int                 get_nsid(struct namespace*);
 struct namespace*   get_ns(int id);
 int                 attach_ext_to_ns(struct namespace*, struct extension*);
 int                 remove_ext_from_ns(struct namespace*, struct extension*);
+
+// hashmap.c
+struct hashmap*     hm_alloc(void);
+void                hm_free(struct hashmap*);
+int                 hm_put(struct hashmap*, const char *key, void *val);
+void*               hm_get(struct hashmap*, const char *key);
+int                 hm_del(struct hashmap*, const char *key);
+void                hm_iter(struct hashmap*, void (*fn)(const char*, void*, void*), void *arg);
 
 // number of elements in fixed-size array
 #define NELEM(x) (sizeof(x)/sizeof((x)[0]))

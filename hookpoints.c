@@ -8,6 +8,7 @@ HPLABELS(exec)
 HPLABELS(getpid)
 HPLABELS(read)
 HPLABELS(swtch)
+HPLABELS(mkdir)
 HPLABELS(arprx)
 HPLABELS(iprx)
 
@@ -22,6 +23,7 @@ struct hpt_entry hptable[] = {
   HPTENTRY(exec),
   HPTENTRY(read),
   HPTENTRY(swtch),
+  HPTENTRY(mkdir),
   HPTENTRY(arprx),
   HPTENTRY(iprx),
 };

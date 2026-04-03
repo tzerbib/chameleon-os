@@ -22,6 +22,8 @@ uint check_arity(enum hookpoint hp) {
   case HP_iprx:
   case HP_read:
     return 3;
+  case HP_mkdir: 
+    return 1; 
   default:
     panic("Called check_arity with HP_none");
   }

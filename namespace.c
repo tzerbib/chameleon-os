@@ -28,6 +28,16 @@ struct namespace * create_ns() {
 	if (ns == end) {
 		return (void *)0x0;
 	}
+
+	// alocate maps
+	ns->maps = hm_alloc(); 
+	if (ns->maps == 0){
+		acquire(&ns->lock); 
+		ns->slot_state = AVAILABLE; 
+		release(&ns->lock); 
+		return (void*)0x0; 
+	}
+
 	return ns;
 }
 
@@ -59,6 +69,7 @@ struct namespace *get_ns(int id) {
 void initialize_namespace(struct namespace *ns) {
 	acquire(&ns->lock);
 	ns->slot_state = AVAILABLE;
+	ns->maps = 0; 
 	struct ns_object* ns_obj = ns->namespaced_objects;
 	struct ns_object* ns_obj_end = &ns->namespaced_objects[N_NS_OBJ];
 	for (; ns_obj < ns_obj_end; ++ns_obj) {
@@ -83,12 +94,13 @@ int namespaceinit(void) {
 	}
 
 	// Then mark the global namespace at 0
-	{
-		struct namespace *ns = &namespace_table.namespaces[0];
-		acquire(&ns->lock);
-		ns->slot_state = TAKEN;
-		release(&ns->lock);
-	}
+	// {
+	// 	struct namespace *ns = &namespace_table.namespaces[0];
+	// 	acquire(&ns->lock);
+	// 	ns->slot_state = TAKEN;
+	// 	release(&ns->lock);
+	// }
+	create_ns();
 	return 0;
 }
 
@@ -215,5 +227,13 @@ int destroy_ns(struct namespace *ns) {
 	}
 	ns->slot_state = AVAILABLE;
 	release(&ns->lock);
+	
+	// free maps (done after releasing ns->lock to prevent lock-ordering)
+	if (ns->maps != 0){
+		hm_free(ns->maps);
+		ns->maps = 0;
+	}
+
+
 	return 0;
 }
