@@ -49,6 +49,7 @@ binit(void)
   for(b = bcache.buf; b < bcache.buf+NBUF; b++){
     b->next = bcache.head.next;
     b->prev = &bcache.head;
+    b->nsids = 0;
     initsleeplock(&b->lock, "buffer");
     bcache.head.next->prev = b;
     bcache.head.next = b;
@@ -84,6 +85,7 @@ bget(uint dev, uint blockno)
       b->blockno = blockno;
       b->flags = 0;
       b->refcnt = 1;
+      b->nsids = 0;
       release(&bcache.lock);
       acquiresleep(&b->lock);
       return b;
@@ -140,5 +142,34 @@ brelse(struct buf *b)
   release(&bcache.lock);
 }
 //PAGEBREAK!
+
+// add a nsid for a block
+void 
+badd_tenant(struct buf *b, int nsid)
+{
+  acquire(&bcache.lock); 
+  BUF_ADD_NSID(b, nsid); 
+  release(&bcache.lock);
+}
+
+// remove a nsid for a block 
+void 
+brem_tenant(struct buf *b, int nsid)
+{
+  acquire(&bcache.lock); 
+  BUF_REMOVE_NSID(b, nsid); 
+  release(&bcache.lock);
+}
+
+int 
+buf_has_tenant(struct buf *b, int nsid)
+{
+  acquire(&bcache.lock); 
+  int res = BUF_HAS_NSID(b, nsid); 
+  release(&bcache.lock);
+  return res; 
+}
+
+
 // Blank page.
 
