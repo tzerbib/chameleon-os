@@ -65,8 +65,6 @@ void* memset(void*, int, uint);
 void* malloc(uint);
 void free(void*);
 int atoi(const char*);
-char* itoa(int n, char* str);
-
 
 // additional functions
 void hexdump(void *data, size_t size);

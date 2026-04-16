@@ -92,46 +92,6 @@ atoi(const char *s)
   return n;
 }
 
-char*
-itoa(int n, char *str){
-  int i = 0;
-  int neg = 0;
-
-  if (n == 0) {
-      str[i++] = '0';
-      str[i] = '\0';
-      return str;
-  }
-
-  if (n < 0) {
-      neg = 1;
-      n = -n;
-  }
-
-  while (n > 0) {
-      str[i++] = (n % 10) + '0';
-      n /= 10;
-  }
-
-  if (neg) {
-      str[i++] = '-';
-  }
-
-  str[i] = '\0';
-
-  int start = 0;
-  int end = i - 1;
-  while (start < end) {
-      char tmp = str[start];
-      str[start] = str[end];
-      str[end] = tmp;
-      start++;
-      end--;
-  }
-
-  return str; 
-}
-
 void*
 memmove(void *vdst, const void *vsrc, int n)
 {
