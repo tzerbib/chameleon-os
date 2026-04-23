@@ -49,7 +49,10 @@ binit(void)
   for(b = bcache.buf; b < bcache.buf+NBUF; b++){
     b->next = bcache.head.next;
     b->prev = &bcache.head;
-    b->nsids = 0;
+
+    // zero out nsids
+    memset(b->nsids, 0, sizeof(b->nsids));
+
     initsleeplock(&b->lock, "buffer");
     bcache.head.next->prev = b;
     bcache.head.next = b;
@@ -85,7 +88,17 @@ bget(uint dev, uint blockno)
       b->blockno = blockno;
       b->flags = 0;
       b->refcnt = 1;
-      b->nsids = 0;
+
+      // zero out of the nsids slice 
+      memset(b->nsids, 0, sizeof(b->nsids));
+
+
+      // hm_free(b->nsid_refcounts); 
+      // b->nsid_refcounts = hm_alloc(); 
+      // if (b->nsid_refcounts == 0){
+      //   panic("bget: hmac_alloc failed");
+      // }
+
       release(&bcache.lock);
       acquiresleep(&b->lock);
       return b;
@@ -143,31 +156,39 @@ brelse(struct buf *b)
 }
 //PAGEBREAK!
 
-// add a nsid for a block
-void 
-badd_tenant(struct buf *b, int nsid)
+
+// read a block given nsid 
+struct buf*
+bread_ns(uint dev, uint blockno, int nsid)
 {
-  acquire(&bcache.lock); 
-  BUF_ADD_NSID(b, nsid); 
-  release(&bcache.lock);
+    if(nsid < 0 || nsid >= 10)
+        panic("bread_ns: invalid nsid");
+
+    struct buf *b = bget(dev, blockno);
+    if((b->flags & B_VALID) == 0)
+        iderw(b);
+
+    acquire(&bcache.lock);
+    b->nsids[nsid]++;
+    release(&bcache.lock);
+
+    return b;
 }
 
-// remove a nsid for a block 
-void 
-brem_tenant(struct buf *b, int nsid)
+// release a block given nsid 
+void
+brelse_ns(struct buf *b, int nsid)
 {
-  acquire(&bcache.lock); 
-  BUF_REMOVE_NSID(b, nsid); 
-  release(&bcache.lock);
-}
+    if(nsid < 0 || nsid >= 10)
+        panic("brelse_ns: invalid nsid");
 
-int 
-buf_has_tenant(struct buf *b, int nsid)
-{
-  acquire(&bcache.lock); 
-  int res = BUF_HAS_NSID(b, nsid); 
-  release(&bcache.lock);
-  return res; 
+    acquire(&bcache.lock);
+    if(b->nsids[nsid] == 0)
+        panic("brelse_ns: refcount already zero");
+    b->nsids[nsid]--;
+    release(&bcache.lock);
+
+    brelse(b);
 }
 
 

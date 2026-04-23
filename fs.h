@@ -55,3 +55,6 @@ struct dirent {
   char name[DIRSIZ];
 };
 
+// toggle on whether or not to use the nsid versions of bio.c funcs
+#define TOGGLE_USE_NSID false; 
+

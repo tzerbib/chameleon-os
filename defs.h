@@ -18,9 +18,9 @@ void            binit(void);
 struct buf*     bread(uint, uint);
 void            brelse(struct buf*);
 void            bwrite(struct buf*);
-void            badd_tenant(struct buf*, int);
-void            brem_tenant(struct buf*, int);
-int             buf_has_tenant(struct buf*, int);
+struct buf* bread_ns(uint dev, uint blockno, int nsid);
+void brelse_ns(struct buf *b, int nsid);
+
 
 // console.c
 void            consoleinit(void);
