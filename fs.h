@@ -5,6 +5,9 @@
 #define ROOTINO 1  // root i-number
 #define BSIZE 512  // block size
 
+// toggle on whether or not to use the nsid versions of bio.c funcs
+#define TOGGLE_USE_NSID 0 // 0 = false 
+
 // Disk layout:
 // [ boot block | super block | log | inode blocks |
 //                                          free bit map | data blocks]
@@ -54,7 +57,4 @@ struct dirent {
   ushort inum;
   char name[DIRSIZ];
 };
-
-// toggle on whether or not to use the nsid versions of bio.c funcs
-#define TOGGLE_USE_NSID false; 
 
