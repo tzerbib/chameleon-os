@@ -245,7 +245,7 @@ iupdate(struct inode *ip)
 
   int nsid = get_nsid(myproc()->ns);
 
-  (TOGGLE_USE_NSID) ? bread_ns(ip->dev, IBLOCK(ip->inum, sb), nsid): bread(ip->dev, IBLOCK(ip->inum, sb));
+  bp = (TOGGLE_USE_NSID) ? bread_ns(ip->dev, IBLOCK(ip->inum, sb), nsid): bread(ip->dev, IBLOCK(ip->inum, sb));
 
   dip = (struct dinode*)bp->data + ip->inum%IPB;
   dip->type = ip->type;

@@ -92,13 +92,6 @@ bget(uint dev, uint blockno)
       // zero out of the nsids slice 
       memset(b->nsids, 0, sizeof(b->nsids));
 
-
-      // hm_free(b->nsid_refcounts); 
-      // b->nsid_refcounts = hm_alloc(); 
-      // if (b->nsid_refcounts == 0){
-      //   panic("bget: hmac_alloc failed");
-      // }
-
       release(&bcache.lock);
       acquiresleep(&b->lock);
       return b;
@@ -158,39 +151,35 @@ brelse(struct buf *b)
 
 
 // read a block given nsid 
+// TODO: currproc = 0 -> interrupt context, just print out for now and deal with later 
 struct buf*
 bread_ns(uint dev, uint blockno, int nsid)
 {
-    if(nsid < 0 || nsid >= 10)
+    if(nsid < 0 || nsid >= N_NS)
         panic("bread_ns: invalid nsid");
+
+    if (nsid == 0){
+      // interrupt context, just print out for now
+      return NULL;
+    }
 
     struct buf *b = bget(dev, blockno);
     if((b->flags & B_VALID) == 0)
         iderw(b);
 
     acquire(&bcache.lock);
-    b->nsids[nsid]++;
+    BUF_SET_NSID(b, nsid); 
     release(&bcache.lock);
 
     return b;
 }
 
-// release a block given nsid 
 void
 brelse_ns(struct buf *b, int nsid)
 {
-    if(nsid < 0 || nsid >= 10)
-        panic("brelse_ns: invalid nsid");
-
-    acquire(&bcache.lock);
-    if(b->nsids[nsid] == 0)
-        panic("brelse_ns: refcount already zero");
-    b->nsids[nsid]--;
-    release(&bcache.lock);
-
-    brelse(b);
+  (void)nsid;  
+  brelse(b);
 }
-
 
 // Blank page.
 
