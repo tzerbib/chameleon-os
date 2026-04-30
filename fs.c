@@ -42,7 +42,7 @@ readsb(int dev, struct superblock *sb)
 
   brelse(bp);
 
-  // (TOGGLE_USE_NSID) ? brelse_ns(bp, 1) : brelse(bp);
+  // (TOGGLE_USE_NSID) ? brelse_ns(bp, 0) : brelse(bp);
 }
 // Zero a block.
 static void
