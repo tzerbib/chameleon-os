@@ -31,13 +31,18 @@ struct superblock sb;
 void
 readsb(int dev, struct superblock *sb)
 {
+  // note: called from iinit, before any process exists
   struct buf *bp;
 
-  bp = (TOGGLE_USE_NSID) ? bread_ns(dev, 1, 0) : bread(dev, 1);
+  // bp = (TOGGLE_USE_NSID) ? bread_ns(dev, 1, 0) : bread(dev, 1);
+  
+  bp = bread(dev, 1);
 
   memmove(sb, bp->data, sizeof(*sb));
 
-  (TOGGLE_USE_NSID) ? brelse_ns(bp, 1) : brelse(bp);
+  brelse(bp);
+
+  // (TOGGLE_USE_NSID) ? brelse_ns(bp, 1) : brelse(bp);
 }
 // Zero a block.
 static void
@@ -187,6 +192,7 @@ struct {
 void
 iinit(int dev)
 {
+  // initializes inode cache
   int i = 0;
   
   initlock(&icache.lock, "icache");
@@ -319,7 +325,7 @@ ilock(struct inode *ip)
 
   acquiresleep(&ip->lock);
 
-  int nsid = get_nsid(myproc()->ns);
+  int nsid = get_nsid(myproc()->ns); // when called from very first process init, nsid is 0
 
   if(ip->valid == 0){
     bp = (TOGGLE_USE_NSID) ? bread_ns(ip->dev, IBLOCK(ip->inum, sb), nsid) : bread(ip->dev, IBLOCK(ip->inum, sb));

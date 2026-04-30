@@ -50,8 +50,7 @@ binit(void)
     b->next = bcache.head.next;
     b->prev = &bcache.head;
 
-    // zero out nsids
-    memset(b->nsids, 0, sizeof(b->nsids));
+    b->nsids = 0; // zero out nsids
 
     initsleeplock(&b->lock, "buffer");
     bcache.head.next->prev = b;
@@ -89,8 +88,7 @@ bget(uint dev, uint blockno)
       b->flags = 0;
       b->refcnt = 1;
 
-      // zero out of the nsids slice 
-      memset(b->nsids, 0, sizeof(b->nsids));
+      b->nsids = 0; // zero out of the nsids slice 
 
       release(&bcache.lock);
       acquiresleep(&b->lock);
@@ -160,7 +158,10 @@ bread_ns(uint dev, uint blockno, int nsid)
 
     if (nsid == 0){
       // interrupt context, just print out for now
-      return NULL;
+      // cprintf("bread_ns called in interrupt context: dev=%d blockno=%d nsid=%d\n", dev, blockno, nsid);
+      return bread(dev, blockno);
+    } else {
+      cprintf("bread_ns called with nsid %d\n", nsid);
     }
 
     struct buf *b = bget(dev, blockno);
