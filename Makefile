@@ -226,6 +226,7 @@ UPROGS=\
 	_x_time\
 	_x_time_1\
 	_net_exts\
+	_multiechoserver\
 	$(UEXTS)
 
 NET_UPROGS=\
@@ -318,7 +319,7 @@ EXTRA=\
 	x_ns_test.c\
 	x_time.c\
 	x_time_1.c\
-	net_exts.c\
+	net_exts.c multiechoserver.c\
 
 dist:
 	rm -rf dist
