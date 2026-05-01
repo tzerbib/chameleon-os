@@ -1,14 +1,15 @@
 #include "api/hookpoint.h"
+#include "extension/biocontext.h"
+#include "extension/extcontext.h"
+#include "extension/extcontexts.h"
 #include "hookpoints.h"
 #include "types.h"
 #include "defs.h"
-#include "mmu.h"
-#include "param.h"
-#include "proc.h"
 #include "namespace.h"
 #include "extensions.h"
 #include "trampoline.h"
 #include "ethernet_vlan.h"
+#include "policies.h"
 
 
 uint check_arity(enum hookpoint hp) {
@@ -105,17 +106,6 @@ enum hookpoint find_hp_by_addr(unsigned char const* addr) {
   panic("no hp found by addr");
 }
 
-// TODO: in progress...?
-struct context_exec {
-  char const* path;
-  char const* const* args;
-};
-
-static void build_context_exec(uint const* ebp, struct context_exec* ctx) {
-  ctx->path = (typeof(ctx->path)) ebp[2];
-  ctx->args = (typeof(ctx->args)) ebp[3];
-}
-
 /*
  * create a context object
  * populate it once from ebp using build_context
@@ -124,21 +114,6 @@ static void build_context_exec(uint const* ebp, struct context_exec* ctx) {
 
 #define TRAMPOLINE(arity)\
   void trampoline##arity(uint const* ebp [[maybe_unused]]) {\
-    struct proc *currproc = myproc();\
-    struct namespace *currns;\
-    if (currproc == 0) {\
-      /* TODO: the ns is dependent on vid or something else */\
-      uint16_t vid = stack_top(&vlan_stack);\
-      /* TODO: maybe change nsid to uint16 */\
-      currns = get_ns((int)vid);\
-      if (currns == 0) {\
-        /* No ns created for the vid*/\
-        return;\
-      }\
-    } else {\
-      currns = currproc->ns;\
-    }\
-    struct ns_object* ns_obj;\
     unsigned char* ret_addr;\
     asm volatile (\
       "movl 4(%%ebp), %0"\
@@ -146,25 +121,42 @@ static void build_context_exec(uint const* ebp, struct context_exec* ctx) {
       :\
       :);\
     enum hookpoint trigger = find_hp_by_addr(ret_addr);\
-    /* TODO: figure out how to remove locking */\
-    /* acquire(&currns->lock); */\
-    /* TODO: Build context here depending on trigger */\
-    for (ns_obj = currns->namespaced_exts; ns_obj < &currns->namespaced_exts[N_NS_EXT]; ++ns_obj) {\
-      void* p = ns_obj->pointer;\
-      if (ns_obj->kind == NONE) {\
-        break;\
-      }\
-      struct extension* e = (struct extension*)p;\
-      /* TODO: conditions here need rethinking for detachment */\
-      if (e->state != EXT_ATTACHED) {\
-        break;\
-      }\
-      if (e->hp != trigger) {\
-        continue;\
-      }\
-      EXPAND(BUILD_ARGS_GENERIC(arity));\
+    build_context_t* f = get_build_context_f(trigger);\
+    struct extcontext ctx;\
+    if (f != nullptr) {\
+      f(ebp, (uint32_t)ret_addr, &ctx);\
     }\
-    /* release(&currns->lock); */\
+    struct policy* policy = get_policy_by_hookpoint(trigger);\
+    struct attribution attr = policy_get(policy, &ctx);\
+    /* Look through all ns, could be optimize with some bitmask set trick */\
+    for (int i = 0; i < N_NS; i++) {\
+      if (i == attr.process || ATTR_HAS_NSID(attr, i)) {\
+        struct namespace* ns = get_ns(i);\
+        if (ns == nullptr) {\
+          return;\
+        }\
+        /* TODO: figure out how to remove locking */\
+        /* acquire(&ns->lock); */\
+        struct ns_object* ns_obj;\
+        for (ns_obj = ns->namespaced_exts; ns_obj < &ns->namespaced_exts[N_NS_EXT]; ++ns_obj) {\
+          void* p = ns_obj->pointer;\
+          if (ns_obj->kind == NONE) {\
+            break;\
+          }\
+          struct extension* e = (struct extension*)p;\
+          /* TODO: conditions here need rethinking for detachment */\
+          if (e->state != EXT_ATTACHED) {\
+            break;\
+          }\
+          if (e->hp != trigger) {\
+            continue;\
+          }\
+          /* TODO: the following needs to get changed to passing in context */\
+          EXPAND(BUILD_ARGS_GENERIC(arity));\
+        }\
+        /* release(&ns->lock); */\
+      }\
+    }\
   }
 
 ALSO_REPEAT(7, TRAMPOLINE, DL_NL, SEQ_0_7)
