@@ -10,7 +10,6 @@
 #include "namespace.h"
 #include "api/hookpoint.h"
 #include "hookpoints.h"
-#include "namespace.h"
 
 // TODO: think if this needs fixing like below (use cases)
 int mypid(void) {
