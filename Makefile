@@ -29,15 +29,30 @@ OBJS = \
 	uart.o\
 	vectors.o\
 	vm.o\
-	sysext.o\
-	extensions.o\
 	elf.o\
 	namespace.o\
 	sysns.o\
-	hookpoints.o\
-	trampoline.o\
 	hashmap.o\
 	stack.o\
+
+POLICY = policy/
+EXTENSION = extension/
+
+POLICY_SRCS = $(wildcard $(POLICY)*.c)
+POLICY_OBJS = $(POLICY_SRCS:%.c=%.o)
+
+EXTENSION_SRCS = $(wildcard $(EXTENSION)*.c)
+EXTENSION_OBJS = $(EXTENSION_SRCS:%.c=%.o)
+
+EXT_OBJS = \
+	sysext.o\
+	extensions.o\
+	hookpoints.o\
+	trampoline.o\
+	policies.o\
+
+EXT_OBJS += $(POLICY_OBJS)
+EXT_OBJS += $(EXTENSION_OBJS)
 
 NET_OBJS = \
 	arp.o\
@@ -55,6 +70,7 @@ NET_OBJS = \
 	udp.o\
 	ethernet_vlan.o\
 
+OBJS += $(EXT_OBJS)
 OBJS += $(NET_OBJS)
 
 # Cross-compiling (e.g., on Mac OS X)
