@@ -8,6 +8,7 @@
 #include "ethernet.h"
 #include "ip.h"
 #include "extensions.h"
+#include "policies.h"
 
 #define IP_VERSION_IPV4 4
 
@@ -240,13 +241,14 @@ ip_netif_reconfigure (struct netif *netif, ip_addr_t unicast, ip_addr_t netmask,
 }
 
 struct netif *
-ip_netif_by_addr (ip_addr_t *addr) {
+ip_netif_by_addr (ip_addr_t const* addr) {
     struct netdev *dev;
     struct netif *entry;
 
+    struct namespace *currns = get_netns();
     for (dev = netdev_root(); dev; dev = dev->next) {
         for (entry = dev->ifs; entry; entry = entry->next) {
-            if (entry->family == NETIF_FAMILY_IPV4 && ((struct netif_ip *)entry)->unicast == *addr) {
+            if (entry->family == NETIF_FAMILY_IPV4 && entry->ns == currns && ((struct netif_ip *)entry)->unicast == *addr) {
                 return entry;
             }
         }

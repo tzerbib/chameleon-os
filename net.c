@@ -1,10 +1,11 @@
 // Copyright (c) 2012-2020 YAMAMOTO Masaya
 // SPDX-License-Identifier: MIT
 
+#include "ethernet_vlan.h"
 #include "types.h"
 #include "defs.h"
 #include "net.h"
-#include "ip.h"
+#include "proc.h"
 
 struct netproto {
     struct netproto *next;
@@ -91,19 +92,21 @@ netdev_add_netif(struct netdev *dev, struct netif *netif)
 {
     struct netif *entry;
 
+    struct namespace* currns = get_netns();
     for (entry = dev->ifs; entry; entry = entry->next) {
-        if (entry->family == netif->family) {
+        if (entry->family == netif->family && currns == netif->ns) {
             return -1;
         }
     }
 #ifdef DEBUG
     if (netif->family == NETIF_FAMILY_IPV4) {
         char addr[IP_ADDR_STR_LEN];
-        cprintf("[net] Add <%s> to <%s>\n", ip_addr_ntop(&((struct netif_ip *)netif)->unicast, addr, sizeof(addr)), dev->name);
+        cprintf("[net] Add <%s> to <%s> for ns <%d>\n", ip_addr_ntop(&((struct netif_ip *)netif)->unicast, addr, sizeof(addr)), dev->name, get_nsid(currns));
     }
 #endif
     netif->next = dev->ifs;
     netif->dev  = dev;
+    netif->ns = currns;
     dev->ifs = netif;
     return 0;
 }
@@ -113,8 +116,9 @@ netdev_get_netif(struct netdev *dev, int family)
 {
     struct netif *entry;
 
+    struct namespace* currns = get_netns();
     for (entry = dev->ifs; entry; entry = entry->next) {
-        if (entry->family == family) {
+        if (entry->family == family && entry->ns == currns) {
             return entry;
         }
     }
@@ -150,4 +154,11 @@ netinit(void)
     icmp_init();
     udp_init();
     tcp_init();
+}
+
+struct namespace* get_netns() {
+  if (myproc() == nullptr) {
+    return get_ns(stack_top(&vlan_stack));
+  }
+  return myproc()->ns;
 }

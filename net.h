@@ -1,3 +1,5 @@
+#pragma once
+
 #define NETDEV_TYPE_ETHERNET  (0x0001)
 #define NETDEV_TYPE_SLIP      (0x0002)
 
@@ -30,6 +32,7 @@ struct netif {
     struct netif *next;
     uint8_t family;
     struct netdev *dev;
+    struct namespace* ns;
     /* Depends on implementation of protocols. */
 };
 
@@ -55,3 +58,5 @@ struct netdev {
     struct netdev_ops *ops;
     void *priv;
 };
+
+struct namespace* get_netns();
