@@ -1,5 +1,6 @@
 #pragma once
-#include "types.h"
+
+#include "spinlock.h"
 
 #define __CONCAT(a, b) a ## b
 #define CONCATENATE(a, b) __CONCAT(a, b)
@@ -11,10 +12,10 @@
 struct stack {
   uint16_t arr[MAX_STACK_SIZE];
   uint16_t* top;
+  struct spinlock lock;
 };
 
-void stack_init(struct stack* s);
-[[nodiscard]] int stack_is_empty(struct stack const* s);
-[[nodiscard]] int stack_push(struct stack* s, uint16_t e);
-uint16_t stack_pop(struct stack* s);
-[[nodiscard]] uint16_t stack_top(struct stack const* s);
+void stack_init(struct stack *s, char *lk);
+[[nodiscard]] int stack_push(struct stack *s, uint16_t e);
+uint16_t stack_pop(struct stack *s);
+[[nodiscard]] uint16_t stack_top(struct stack *s);

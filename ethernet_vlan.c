@@ -11,7 +11,7 @@
 struct stack vlan_stack;
 
 void vlanstackinit() {
-    stack_init(&vlan_stack);
+    stack_init(&vlan_stack, "vlan_stack");
 }
 
 static void vlan_hdr_dump(struct vlan_hdr const* hdr) {

@@ -90,6 +90,7 @@ int namespaceinit(void) {
 	struct namespace *ns = namespace_table.namespaces;
 	struct namespace *end = &namespace_table.namespaces[N_NS];
 	for (; ns < end; ++ns) {
+		initlock(&ns->lock, "ns");
 		initialize_namespace(ns);
 	}
 
