@@ -1,3 +1,10 @@
+#pragma once
+
+#include "types.h"
+#include "mmu.h"
+#include "param.h"
+#include "spinlock.h"
+
 // Per-CPU state
 struct cpu {
   uchar apicid;                // Local APIC ID
