@@ -50,6 +50,9 @@ binit(void)
   for(b = bcache.buf; b < bcache.buf+NBUF; b++){
     b->next = bcache.head.next;
     b->prev = &bcache.head;
+
+    b->nsids = 0; // zero out nsids
+
     initsleeplock(&b->lock, "buffer");
     bcache.head.next->prev = b;
     bcache.head.next = b;
@@ -86,6 +89,9 @@ bget(uint dev, uint blockno)
       b->blockno = blockno;
       b->flags = 0;
       b->refcnt = 1;
+
+      b->nsids = 0; // zero out of the nsids slice 
+
       release(&bcache.lock);
       acquiresleep(&b->lock);
       return b;
@@ -145,5 +151,41 @@ brelse(struct buf *b)
   release(&bcache.lock);
 }
 //PAGEBREAK!
+
+
+// read a block given nsid 
+// TODO: currproc = 0 -> interrupt context, just print out for now and deal with later 
+struct buf*
+bread_ns(uint dev, uint blockno, int nsid)
+{
+    if(nsid < 0 || nsid >= N_NS)
+        panic("bread_ns: invalid nsid");
+
+    if (nsid == 0){
+      // interrupt context, just print out for now
+      // cprintf("bread_ns called in interrupt context: dev=%d blockno=%d nsid=%d\n", dev, blockno, nsid);
+      return bread(dev, blockno);
+    } else {
+      cprintf("bread_ns called with nsid %d\n", nsid);
+    }
+
+    struct buf *b = bget(dev, blockno);
+    if((b->flags & B_VALID) == 0)
+        iderw(b);
+
+    acquire(&bcache.lock);
+    BUF_SET_NSID(b, nsid); 
+    release(&bcache.lock);
+
+    return b;
+}
+
+void
+brelse_ns(struct buf *b, int nsid)
+{
+  (void)nsid;  
+  brelse(b);
+}
+
 // Blank page.
 
