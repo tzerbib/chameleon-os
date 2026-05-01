@@ -26,6 +26,7 @@
 #include "sleeplock.h"
 #include "fs.h"
 #include "buf.h"
+#include "namespace.h"
 
 struct {
   struct spinlock lock;
@@ -56,7 +57,6 @@ binit(void)
     initsleeplock(&b->lock, "buffer");
     bcache.head.next->prev = b;
     bcache.head.next = b;
-    b->nsid = 1; // TODO: remove later
   }
 }
 

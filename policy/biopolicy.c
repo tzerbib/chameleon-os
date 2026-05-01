@@ -20,7 +20,7 @@ static struct attribution biopolicy_get(struct biopolicy const* this, struct ext
   if (currproc != nullptr) {
     attr.process = get_nsid(currproc->ns);
   }
-  ATTR_SET_NSID(attr, ctx->bio.buf->nsid);
+  attr.nsids = ctx->bio.buf->nsids;
   return attr;
 }
 
