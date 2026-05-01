@@ -108,7 +108,7 @@ bread(uint dev, uint blockno)
 
   b = bget(dev, blockno);
   // NOTE: adding any code in between will break context building
-  EXT_HP_NOPS(bread);
+  // EXT_HP_NOPS(bread);
 
   if((b->flags & B_VALID) == 0) {
     iderw(b);
@@ -170,6 +170,9 @@ bread_ns(uint dev, uint blockno, int nsid)
     }
 
     struct buf *b = bget(dev, blockno);
+    // NOTE: adding any code in between will break context building
+    EXT_HP_NOPS(bread);
+
     if((b->flags & B_VALID) == 0)
         iderw(b);
 
