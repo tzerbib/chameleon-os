@@ -233,6 +233,9 @@ e1000_rx(struct e1000 *dev)
                     }
                 }
                 uint16_t vid = get_vid(frame);
+                if (get_ns(vid) == nullptr) {
+                    break;
+                }
                 #ifdef DEBUG
                 ethernet_vlan_dump(dev->netdev, frame, flen);
                 cprintf("vid: %u\n", vid);

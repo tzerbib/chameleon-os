@@ -1,4 +1,6 @@
 #include "extensions.h"
+#include "ethernet_vlan.h"
+#include "stack.h"
 #include "trampoline.h"
 #include "types.h"
 #include "defs.h"
@@ -10,12 +12,20 @@
 #include "hookpoints.h"
 #include "namespace.h"
 
+// TODO: think if this needs fixing like below (use cases)
 int mypid(void) {
   return myproc()->pid;
 }
 
-struct hashmap* my_maps(void) { 
-  return myproc()->ns->maps; 
+struct hashmap* my_maps(void) {
+  struct namespace* currns = nullptr;
+  if (myproc() == 0) {
+    // TODO: this needs fixing
+    currns = get_ns(stack_top(&vlan_stack));
+  } else {
+    currns = myproc()->ns;
+  }
+  return currns->maps; 
 }
 
 typedef void(*function_t)(void);
