@@ -10,7 +10,7 @@ struct buf {
   struct buf *next;
   struct buf *qnext; // disk queue
   uchar data[BSIZE];
-  uint32_t nsids; // bitmask where nsids[i] = 1 if tenant is associated with buf, 0 otherwise
+  uint16_t nsids; // bitmask where nsids[i] = 1 if tenant is associated with buf, 0 otherwise
 };
 #define B_VALID 0x2  // buffer has been read from disk
 #define B_DIRTY 0x4  // buffer needs to be written to disk
