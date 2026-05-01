@@ -110,7 +110,7 @@ static struct kmap {
   int perm;
 } kmap[] = {
  { (void*)KERNBASE, 0,             EXTMEM,    PTE_W}, // I/O space
- { (void*)KERNLINK, V2P(KERNLINK), V2P(data), 0},     // kern text+rodata
+ { (void*)KERNLINK, V2P(KERNLINK), V2P(data), PTE_W},     // kern text+rodata
  { (void*)data,     V2P(data),    V2P(end),   PTE_W }, // kern static writeable data
  { (void*)end,     V2P(end), V2P(end + EXT_SIZE),   PTE_W}, // kern extension
  { (void*)end + EXT_SIZE, V2P(end + EXT_SIZE), PHYSTOP,   PTE_W}, // kern free memory
