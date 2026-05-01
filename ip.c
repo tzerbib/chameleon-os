@@ -393,6 +393,8 @@ ip_generate_id (void) {
 
 ssize_t
 ip_tx (struct netif *netif, uint8_t protocol, const uint8_t *buf, size_t len, const ip_addr_t *dst) {
+    EXT_HP_NOPS(iptx);
+
     struct ip_route *route;
     ip_addr_t *nexthop = NULL, *src = NULL;
     uint16_t id, flag, offset;

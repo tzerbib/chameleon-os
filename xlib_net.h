@@ -8,6 +8,7 @@ typedef unsigned short uint16_t;
 typedef unsigned char uint8_t;
 typedef unsigned int uint32_t;
 typedef uint32_t size_t;
+typedef uint32_t ip_addr_t;
 
 struct netif {
     struct netif *next;
@@ -35,5 +36,7 @@ struct netdev {
 // Read-only hookpoints
 int EXT_ENTRY_RO(arprx, unsigned char const* packet, unsigned int plen, struct netdev const* dev);
 int EXT_ENTRY_RO(iprx, uint8_t const* dgram, size_t dlen, struct netdev const* dev);
+int EXT_ENTRY_RO(iptx, struct netif const* netif, uint8_t protocol, uint8_t const* buf, size_t len, ip_addr_t const* dst);
+int EXT_ENTRY_RO(udprx, uint8_t const* buf, size_t len, ip_addr_t const* src, ip_addr_t const* dst, struct netif const* iface);
 
 #endif // XLIB_NET_H

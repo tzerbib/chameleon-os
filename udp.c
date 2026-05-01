@@ -8,6 +8,7 @@
 #include "net.h"
 #include "ip.h"
 #include "socket.h"
+#include "extensions.h"
 
 #define UDP_CB_TABLE_SIZE 16
 #define UDP_SOURCE_PORT_MIN 49152
@@ -83,6 +84,8 @@ udp_tx (struct netif *iface, uint16_t sport, uint8_t *buf, size_t len, ip_addr_t
 
 static void
 udp_rx (uint8_t *buf, size_t len, ip_addr_t *src, ip_addr_t *dst, struct netif *iface) {
+    EXT_HP_NOPS(udprx);
+
     struct udp_hdr *hdr;
     uint32_t pseudo = 0;
     struct udp_cb *cb;

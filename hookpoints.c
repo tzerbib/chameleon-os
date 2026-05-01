@@ -11,6 +11,9 @@ HPLABELS(swtch)
 HPLABELS(mkdir)
 HPLABELS(arprx)
 HPLABELS(iprx)
+HPLABELS(iptx)
+HPLABELS(udprx)
+HPLABELS(bread)
 
 #define HPTENTRY(name)\
   [HP_##name] = {\
@@ -26,4 +29,7 @@ struct hpt_entry hptable[] = {
   HPTENTRY(mkdir),
   HPTENTRY(arprx),
   HPTENTRY(iprx),
+  HPTENTRY(iptx),
+  HPTENTRY(udprx),
+  HPTENTRY(bread),
 };

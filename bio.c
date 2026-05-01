@@ -18,6 +18,7 @@
 // * B_DIRTY: the buffer data has been modified
 //     and needs to be written to disk.
 
+#include "extensions.h"
 #include "types.h"
 #include "defs.h"
 #include "param.h"
@@ -52,6 +53,7 @@ binit(void)
     initsleeplock(&b->lock, "buffer");
     bcache.head.next->prev = b;
     bcache.head.next = b;
+    b->nsid = 1; // TODO: remove later
   }
 }
 
@@ -99,6 +101,9 @@ bread(uint dev, uint blockno)
   struct buf *b;
 
   b = bget(dev, blockno);
+  // NOTE: adding any code in between will break context building
+  EXT_HP_NOPS(bread);
+
   if((b->flags & B_VALID) == 0) {
     iderw(b);
   }
