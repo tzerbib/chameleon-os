@@ -8,26 +8,26 @@ putc(int fd, char c)
   write(fd, &c, 1);
 }
 
-static void
-printu64(int fd, uint64 xx, int base)
-{
-  static char digits[] = "0123456789abcdef";
-  char buf[16];
-  int i;
-  uint64 x;
+// static void
+// printu64(int fd, uint64 xx, int base)
+// {
+//   static char digits[] = "0123456789abcdef";
+//   char buf[16];
+//   int i;
+//   uint64 x;
 
-  x = xx;
+//   x = xx;
 
-  i = 0;
-  do{
-    // mod causes problems, undefined reference to __udivmoddi4
-    // linking against libgcc fixes that linker error but breaks boot :(
-    buf[i++] = digits[x % base];
-  }while((x /= base) != 0);
+//   i = 0;
+//   do{
+//     // mod causes problems, undefined reference to __udivmoddi4
+//     // linking against libgcc fixes that linker error but breaks boot :(
+//     buf[i++] = digits[x % base];
+//   }while((x /= base) != 0);
 
-  while(--i >= 0)
-    putc(fd, buf[i]);
-}
+//   while(--i >= 0)
+//     putc(fd, buf[i]);
+// }
 
 static void
 printint(int fd, int xx, int base, int sgn)
