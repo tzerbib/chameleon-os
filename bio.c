@@ -166,7 +166,7 @@ bread_ns(uint dev, uint blockno)
       panic("bread_ns: invalid nsid");
     }
 
-    if (nsid == -1){
+    if (get_ns(nsid) == nullptr){
       cprintf("bread_ns called in interrupt context: dev=%d blockno=%d nsid=%d\n", dev, blockno, nsid);
       return bread(dev, blockno);
     }
