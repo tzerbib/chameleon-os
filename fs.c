@@ -34,15 +34,11 @@ readsb(int dev, struct superblock *sb)
   // note: called from iinit, before any process exists
   struct buf *bp;
 
-  // bp = (TOGGLE_USE_NSID) ? bread_ns(dev, 1, 0) : bread(dev, 1);
-  
-  bp = bread(dev, 1);
+  bp = bread_ns(dev, 1);
 
   memmove(sb, bp->data, sizeof(*sb));
 
-  brelse(bp);
-
-  // (TOGGLE_USE_NSID) ? brelse_ns(bp, 0) : brelse(bp);
+  brelse_ns(bp);
 }
 // Zero a block.
 static void
@@ -50,14 +46,12 @@ bzero(int dev, int bno)
 {
   struct buf *bp;
 
-  int nsid = get_nsid(myproc()->ns);
-
-  bp = (TOGGLE_USE_NSID) ? bread_ns(dev, bno, nsid) : bread(dev, bno);
+  bp = bread_ns(dev, bno);
 
   memset(bp->data, 0, BSIZE);
   log_write(bp);
 
-  (TOGGLE_USE_NSID) ? brelse_ns(bp, nsid) : brelse(bp);
+  brelse_ns(bp);
 
 }
 
@@ -73,9 +67,7 @@ balloc(uint dev)
   bp = 0;
   for(b = 0; b < sb.size; b += BPB){
 
-
-    int nsid = get_nsid(myproc()->ns);
-    bp = (TOGGLE_USE_NSID) ? bread_ns(dev, BBLOCK(b, sb), nsid): bread(dev, BBLOCK(b, sb));
+    bp = bread_ns(dev, BBLOCK(b, sb));
     
     for(bi = 0; bi < BPB && b + bi < sb.size; bi++){
       m = 1 << (bi % 8);
@@ -83,13 +75,13 @@ balloc(uint dev)
         bp->data[bi/8] |= m;  // Mark block in use.
         log_write(bp);
 
-        (TOGGLE_USE_NSID) ? brelse_ns(bp, nsid) : brelse(bp);
+        brelse_ns(bp);
 
         bzero(dev, b + bi);
         return b + bi;
       }
     }
-    (TOGGLE_USE_NSID) ? brelse_ns(bp, nsid) : brelse(bp);
+    brelse_ns(bp);
   }
   panic("balloc: out of blocks");
 }
@@ -101,9 +93,7 @@ bfree(int dev, uint b)
   struct buf *bp;
   int bi, m;
 
-  int nsid = get_nsid(myproc()->ns);
-
-  bp = (TOGGLE_USE_NSID) ? bread_ns(dev, BBLOCK(b, sb), nsid) : bread(dev, BBLOCK(b, sb));
+  bp = bread_ns(dev, BBLOCK(b, sb));
 
   bi = b % BPB;
   m = 1 << (bi % 8);
@@ -112,7 +102,7 @@ bfree(int dev, uint b)
   bp->data[bi/8] &= ~m;
   log_write(bp);
 
-  (TOGGLE_USE_NSID) ? brelse_ns(bp, nsid) : brelse(bp);
+  brelse_ns(bp);
 }
 
 // Inodes.
@@ -220,21 +210,19 @@ ialloc(uint dev, short type)
   struct buf *bp;
   struct dinode *dip;
 
-  int nsid = get_nsid(myproc()->ns);
-
   for(inum = 1; inum < sb.ninodes; inum++){
-    bp = (TOGGLE_USE_NSID) ? bread_ns(dev, IBLOCK(inum, sb), nsid) : bread(dev, IBLOCK(inum, sb));
+    bp = bread_ns(dev, IBLOCK(inum, sb));
     dip = (struct dinode*)bp->data + inum%IPB;
     if(dip->type == 0){  // a free inode
       memset(dip, 0, sizeof(*dip));
       dip->type = type;
       log_write(bp);   // mark it allocated on the disk
 
-      (TOGGLE_USE_NSID) ? brelse_ns(bp, nsid) : brelse(bp);
+      brelse_ns(bp);
   
       return iget(dev, inum);
     }
-    (TOGGLE_USE_NSID) ? brelse_ns(bp, nsid) : brelse(bp);
+    brelse_ns(bp);
   }
   panic("ialloc: no inodes");
 }
@@ -249,9 +237,7 @@ iupdate(struct inode *ip)
   struct buf *bp;
   struct dinode *dip;
 
-  int nsid = get_nsid(myproc()->ns);
-
-  bp = (TOGGLE_USE_NSID) ? bread_ns(ip->dev, IBLOCK(ip->inum, sb), nsid): bread(ip->dev, IBLOCK(ip->inum, sb));
+  bp = bread_ns(ip->dev, IBLOCK(ip->inum, sb));
 
   dip = (struct dinode*)bp->data + ip->inum%IPB;
   dip->type = ip->type;
@@ -262,7 +248,7 @@ iupdate(struct inode *ip)
   memmove(dip->addrs, ip->addrs, sizeof(ip->addrs));
   log_write(bp);
 
-  (TOGGLE_USE_NSID) ? brelse_ns(bp, nsid) : brelse(bp);
+  brelse_ns(bp);
 }
 
 // Find the inode with number inum on device dev
@@ -325,10 +311,8 @@ ilock(struct inode *ip)
 
   acquiresleep(&ip->lock);
 
-  int nsid = get_nsid(myproc()->ns); // when called from very first process init, nsid is 0
-
   if(ip->valid == 0){
-    bp = (TOGGLE_USE_NSID) ? bread_ns(ip->dev, IBLOCK(ip->inum, sb), nsid) : bread(ip->dev, IBLOCK(ip->inum, sb));
+    bp = bread_ns(ip->dev, IBLOCK(ip->inum, sb));
 
     dip = (struct dinode*)bp->data + ip->inum%IPB;
     ip->type = dip->type;
@@ -338,7 +322,7 @@ ilock(struct inode *ip)
     ip->size = dip->size;
     memmove(ip->addrs, dip->addrs, sizeof(ip->addrs));
 
-    (TOGGLE_USE_NSID) ? brelse_ns(bp, nsid) : brelse(bp);
+    brelse_ns(bp);
 
     ip->valid = 1;
     if(ip->type == 0)
@@ -410,8 +394,6 @@ bmap(struct inode *ip, uint bn)
   uint addr, *a;
   struct buf *bp;
 
-  int nsid = get_nsid(myproc()->ns);
-
   if(bn < NDIRECT){
     if((addr = ip->addrs[bn]) == 0)
       ip->addrs[bn] = addr = balloc(ip->dev);
@@ -424,14 +406,14 @@ bmap(struct inode *ip, uint bn)
     if((addr = ip->addrs[NDIRECT]) == 0)
       ip->addrs[NDIRECT] = addr = balloc(ip->dev);
 
-    bp = (TOGGLE_USE_NSID) ? bread_ns(ip->dev, addr, nsid) : bread(ip->dev, addr);
+    bp = bread_ns(ip->dev, addr);
 
     a = (uint*)bp->data;
     if((addr = a[bn]) == 0){
       a[bn] = addr = balloc(ip->dev);
       log_write(bp);
     }
-    (TOGGLE_USE_NSID) ? brelse_ns(bp, nsid) : brelse(bp);
+    brelse_ns(bp);
     return addr;
   }
 
@@ -450,8 +432,6 @@ itrunc(struct inode *ip)
   struct buf *bp;
   uint *a;
 
-  int nsid = get_nsid(myproc()->ns);
-
   for(i = 0; i < NDIRECT; i++){
     if(ip->addrs[i]){
       bfree(ip->dev, ip->addrs[i]);
@@ -461,7 +441,7 @@ itrunc(struct inode *ip)
 
   if(ip->addrs[NDIRECT]){
 
-    bp = (TOGGLE_USE_NSID) ? bread_ns(ip->dev, ip->addrs[NDIRECT], nsid) : bread(ip->dev, ip->addrs[NDIRECT]);
+    bp = bread_ns(ip->dev, ip->addrs[NDIRECT]);
 
 
     a = (uint*)bp->data;
@@ -469,7 +449,7 @@ itrunc(struct inode *ip)
       if(a[j])
         bfree(ip->dev, a[j]);
     }
-    (TOGGLE_USE_NSID) ? brelse_ns(bp, nsid) : brelse(bp);
+    brelse_ns(bp);
     bfree(ip->dev, ip->addrs[NDIRECT]);
     ip->addrs[NDIRECT] = 0;
   }
@@ -498,7 +478,6 @@ readi(struct inode *ip, char *dst, uint off, uint n)
 {
   uint tot, m;
   struct buf *bp;
-  int nsid = get_nsid(myproc()->ns);
 
   if(ip->type == T_DEV){
     if(ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].read)
@@ -513,11 +492,11 @@ readi(struct inode *ip, char *dst, uint off, uint n)
 
   for(tot=0; tot<n; tot+=m, off+=m, dst+=m){
 
-    bp = (TOGGLE_USE_NSID) ? bread_ns(ip->dev, bmap(ip, off/BSIZE), nsid): bread(ip->dev, bmap(ip, off/BSIZE));
+    bp = bread_ns(ip->dev, bmap(ip, off/BSIZE));
 
     m = min(n - tot, BSIZE - off%BSIZE);
     memmove(dst, bp->data + off%BSIZE, m);
-    (TOGGLE_USE_NSID) ? brelse_ns(bp, nsid) : brelse(bp);
+    brelse_ns(bp);
   }
   return n;
 }
@@ -530,7 +509,6 @@ writei(struct inode *ip, char *src, uint off, uint n)
 {
   uint tot, m;
   struct buf *bp;
-  int nsid = get_nsid(myproc()->ns);
 
   if(ip->type == T_DEV){
     if(ip->major < 0 || ip->major >= NDEV || !devsw[ip->major].write)
@@ -545,12 +523,12 @@ writei(struct inode *ip, char *src, uint off, uint n)
 
   for(tot=0; tot<n; tot+=m, off+=m, src+=m){
 
-    bp = (TOGGLE_USE_NSID) ? bread_ns(ip->dev, bmap(ip, off/BSIZE), nsid): bread(ip->dev, bmap(ip, off/BSIZE));
+    bp = bread_ns(ip->dev, bmap(ip, off/BSIZE));
 
     m = min(n - tot, BSIZE - off%BSIZE);
     memmove(bp->data + off%BSIZE, src, m);
     log_write(bp);
-    (TOGGLE_USE_NSID) ? brelse_ns(bp, nsid) : brelse(bp);
+    brelse_ns(bp);
   }
 
   if(n > 0 && off > ip->size){

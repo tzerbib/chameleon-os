@@ -18,8 +18,8 @@ void            binit(void);
 struct buf*     bread(uint, uint);
 void            brelse(struct buf*);
 void            bwrite(struct buf*);
-struct buf* bread_ns(uint dev, uint blockno, int nsid);
-void brelse_ns(struct buf *b, int nsid);
+struct buf* bread_ns(uint dev, uint blockno);
+void brelse_ns(struct buf *b);
 
 
 // console.c

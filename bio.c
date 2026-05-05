@@ -27,6 +27,7 @@
 #include "fs.h"
 #include "buf.h"
 #include "namespace.h"
+#include "proc.h"
 
 struct {
   struct spinlock lock;
@@ -154,19 +155,20 @@ brelse(struct buf *b)
 
 
 // read a block given nsid 
-// TODO: currproc = 0 -> interrupt context, just print out for now and deal with later 
+// TODO: currproc = -1 -> interrupt context, just print out for now and deal with later 
 struct buf*
-bread_ns(uint dev, uint blockno, int nsid)
+bread_ns(uint dev, uint blockno)
 {
-    if(nsid < 0 || nsid >= N_NS)
-        panic("bread_ns: invalid nsid");
+  
+    int nsid = get_nsid(myproc()->ns); 
 
-    if (nsid == 0){
-      // interrupt context, just print out for now
-      // cprintf("bread_ns called in interrupt context: dev=%d blockno=%d nsid=%d\n", dev, blockno, nsid);
+    if (nsid < -1 || nsid >= N_NS){
+      panic("bread_ns: invalid nsid");
+    }
+
+    if (nsid == -1){
+      cprintf("bread_ns called in interrupt context: dev=%d blockno=%d nsid=%d\n", dev, blockno, nsid);
       return bread(dev, blockno);
-    } else {
-      cprintf("bread_ns called with nsid %d\n", nsid);
     }
 
     struct buf *b = bget(dev, blockno);
@@ -184,9 +186,8 @@ bread_ns(uint dev, uint blockno, int nsid)
 }
 
 void
-brelse_ns(struct buf *b, int nsid)
+brelse_ns(struct buf *b)
 {
-  (void)nsid;  
   brelse(b);
 }
 
