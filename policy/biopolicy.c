@@ -4,11 +4,13 @@
 #include "extension/extcontext.h"
 #include "policy/policy.h"
 #include "proc.h"
+#include "namespace.h"
+#include "file.h"
 
 static struct attribution biopolicy_get(struct biopolicy const* this, struct extcontext const* ctx) {
   if (ctx == nullptr) {
     panic("ctx is nullptr");
-  }
+}
   if (ctx->domain != BIO) {
     panic("context is not of type bio");
   }
@@ -20,7 +22,19 @@ static struct attribution biopolicy_get(struct biopolicy const* this, struct ext
   if (currproc != nullptr) {
     attr.process = get_nsid(currproc->ns);
   }
-  attr.nsids = ctx->bio.buf->nsids;
+  
+  
+  const struct buf *b = ctx->bio.buf;
+  
+  if (b->inode != NULL) {
+    // convert ns_opencounts array to bitmap
+    for (int i = 0; i < N_NS; i++) {
+      if (b->inode->ns_opencounts[i] > 0) {
+        attr.nsids |= (1U << i);
+      }
+    }
+  }
+  
   return attr;
 }
 

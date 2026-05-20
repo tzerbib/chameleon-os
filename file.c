@@ -10,6 +10,7 @@
 #include "spinlock.h"
 #include "sleeplock.h"
 #include "file.h"
+#include "proc.h"
 
 struct devsw devsw[NDEV];
 struct {
@@ -62,7 +63,7 @@ fileclose(struct file *f)
   acquire(&ftable.lock);
   if(f->ref < 1)
     panic("fileclose");
-  if(--f->ref > 0){
+  if(--f->ref > 0){ // decrement refcount and return
     release(&ftable.lock);
     return;
   }
@@ -73,8 +74,16 @@ fileclose(struct file *f)
 
   if(ff.type == FD_PIPE)
     pipeclose(ff.pipe, ff.writable);
-  else if(ff.type == FD_INODE){
+  else if(ff.type == FD_INODE){ // inode has refcount of 0
     begin_op();
+
+    int nsid = get_nsid(myproc()->ns);
+    if(nsid >= 0){
+        acquiresleep(&ff.ip->lock);
+        inode_ns_close(ff.ip, nsid);
+        releasesleep(&ff.ip->lock);
+    }
+
     iput(ff.ip);
     end_op();
   }

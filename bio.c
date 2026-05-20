@@ -86,12 +86,15 @@ bget(uint dev, uint blockno)
   // because log.c has modified it but not yet committed it.
   for(b = bcache.head.prev; b != &bcache.head; b = b->prev){
     if(b->refcnt == 0 && (b->flags & B_DIRTY) == 0) {
+
       b->dev = dev;
       b->blockno = blockno;
       b->flags = 0;
       b->refcnt = 1;
 
-      b->nsids = 0; // zero out of the nsids slice 
+      b->nsids = 0; // zero out of the nsids slice TODO: delete this
+
+      b->inode = NULL; 
 
       release(&bcache.lock);
       acquiresleep(&b->lock);
@@ -155,7 +158,6 @@ brelse(struct buf *b)
 
 
 // read a block given nsid 
-// TODO: currproc = -1 -> interrupt context, just print out for now and deal with later 
 struct buf*
 bread_ns(uint dev, uint blockno)
 {
@@ -175,8 +177,10 @@ bread_ns(uint dev, uint blockno)
     // NOTE: adding any code in between will break context building
     EXT_HP_NOPS(bread);
 
-    if((b->flags & B_VALID) == 0)
+    if((b->flags & B_VALID) == 0){
         iderw(b);
+    }
+
 
     acquire(&bcache.lock);
     BUF_SET_NSID(b, nsid); 

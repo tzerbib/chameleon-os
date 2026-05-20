@@ -3,6 +3,7 @@
 #include "types.h"
 #include "fs.h"
 #include "sleeplock.h"
+#include "namespace.h"
 
 struct file {
   enum { FD_NONE, FD_PIPE, FD_INODE, FD_SOCKET } type;
@@ -30,6 +31,8 @@ struct inode {
   short nlink;
   uint size;
   uint addrs[NDIRECT+1];
+
+  uint ns_opencounts[N_NS]; // count of opens per ns
 };
 
 // table mapping major device number to
@@ -42,3 +45,4 @@ struct devsw {
 extern struct devsw devsw[];
 
 #define CONSOLE 1
+;

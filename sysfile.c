@@ -316,6 +316,12 @@ sys_open(void)
     }
   }
 
+  // update inode bitmap 
+  int nsid = get_nsid(myproc()->ns);
+  if (nsid >= 0){
+    inode_ns_open(ip, nsid); 
+  }
+
   if((f = filealloc()) == 0 || (fd = fdalloc(f)) < 0){
     if(f)
       fileclose(f);

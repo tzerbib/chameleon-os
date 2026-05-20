@@ -15,6 +15,8 @@ struct buf {
   struct buf *qnext; // disk queue
   uchar data[BSIZE];
   uint16_t nsids; // bitmask where nsids[i] = 1 if tenant is associated with buf, 0 otherwise
+
+  struct inode *inode; // backpointer to the inode
 };
 #define B_VALID 0x2  // buffer has been read from disk
 #define B_DIRTY 0x4  // buffer needs to be written to disk

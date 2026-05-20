@@ -2,9 +2,11 @@
 
 #include "types.h"
 
+// TODO: rename both to something more clear
+// process_context_nsid, data_context_nsids
 struct attribution {
-  int process;
-  uint16_t nsids;
+  int process; // triggering_nsid
+  uint16_t nsids; // data_interest_nsids ? 
 };
 
 struct policy {

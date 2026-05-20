@@ -493,6 +493,7 @@ readi(struct inode *ip, char *dst, uint off, uint n)
   for(tot=0; tot<n; tot+=m, off+=m, dst+=m){
 
     bp = bread_ns(ip->dev, bmap(ip, off/BSIZE));
+    bp->inode = ip; 
 
     m = min(n - tot, BSIZE - off%BSIZE);
     memmove(dst, bp->data + off%BSIZE, m);
@@ -524,6 +525,7 @@ writei(struct inode *ip, char *src, uint off, uint n)
   for(tot=0; tot<n; tot+=m, off+=m, src+=m){
 
     bp = bread_ns(ip->dev, bmap(ip, off/BSIZE));
+    bp->inode = ip; 
 
     m = min(n - tot, BSIZE - off%BSIZE);
     memmove(bp->data + off%BSIZE, src, m);
@@ -695,4 +697,29 @@ struct inode*
 nameiparent(char *path, char *name)
 {
   return namex(path, 1, name);
+}
+
+// increment nsid bitmap for an inode
+// assume ip->lock is held
+// TODO: print refcount
+void
+inode_ns_open(struct inode *ip, int nsid)
+{
+  if(nsid < 0 || nsid >= N_NS){
+    panic("inode_ns_open: invalid nsid");
+  }
+  ip->ns_opencounts[nsid]++;
+}
+
+// increment nsid bitmap for an inode
+// assume ip->lock is held
+void
+inode_ns_close(struct inode *ip, int nsid)
+{
+  if(nsid < 0 || nsid >= N_NS){
+    panic("inode_ns_open: invalid nsid");
+  }
+  if(ip->ns_opencounts[nsid] > 0){
+    ip->ns_opencounts[nsid]--;
+  }
 }
