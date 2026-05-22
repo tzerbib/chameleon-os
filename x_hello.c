@@ -14,6 +14,13 @@ int main(void) {
   extattach(ebread);
   printf(1, "bread.ext attached to ns %d\n", getnsid());
 
+  // struct extension *eflush;
+  // if (extload("flush.ext", &eflush) != 0) {
+  //   return 1;
+  // }
+  // extattach(eflush);
+  // printf(1, "flush.ext attached to ns %d\n", getnsid());
+
   // struct extension *e1;
   // if (extload("x1.ext", &e1) != 0) {
   //   return 1;

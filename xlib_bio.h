@@ -6,5 +6,6 @@
 
 // Read-only hookpoints
 int EXT_ENTRY_RO(bread, struct biocontext const* ctx);
+int EXT_ENTRY_RO(bflush, struct biocontext const* ctx);
 
 #endif // XLIB_BIO_H

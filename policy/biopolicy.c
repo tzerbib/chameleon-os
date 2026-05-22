@@ -34,7 +34,9 @@ static struct attribution biopolicy_get(struct biopolicy const* this, struct ext
       }
     }
   }
-  
+
+  // cprintf("lol %d\n", attr.nsids); 
+
   return attr;
 }
 

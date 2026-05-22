@@ -25,6 +25,7 @@ uint check_arity(enum hookpoint hp) {
     return 3;
   case HP_mkdir: 
   case HP_bread:
+  case HP_bflush:
     return 1;
   case HP_iptx:
   case HP_udprx:

@@ -9,6 +9,7 @@ void xputs(char const*);
 void xputd(int);
 void xputx(int);
 int mypid(void);
+int mynsid(void);
 
 struct namespace;
 struct hashmap* my_maps(void); 

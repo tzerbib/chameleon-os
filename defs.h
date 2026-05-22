@@ -18,7 +18,7 @@ void            binit(void);
 struct buf*     bread(uint, uint);
 void            brelse(struct buf*);
 void            bwrite(struct buf*);
-struct buf* bread_ns(uint dev, uint blockno);
+struct buf* bread_ns(uint dev, uint blockno, struct inode *ip);
 void brelse_ns(struct buf *b);
 
 

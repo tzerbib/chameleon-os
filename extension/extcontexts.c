@@ -24,6 +24,7 @@ static build_context_t* build_contexts_o0[] = {
   [HP_iprx] = nullptr,
   [HP_iptx] = nullptr,
   [HP_udprx] = nullptr,
+  [HP_bflush] = nullptr,
 };
 
 // TODO: none of the following is implemented
@@ -38,6 +39,7 @@ static build_context_t* build_contexts_o2[] = {
   [HP_iprx] = nullptr,
   [HP_iptx] = nullptr,
   [HP_udprx] = nullptr,
+  [HP_bflush] = nullptr,
 };
 
 build_context_t* get_build_context_f(enum hookpoint hp) {

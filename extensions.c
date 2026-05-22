@@ -27,6 +27,12 @@ struct hashmap* my_maps(void) {
   return currns->maps; 
 }
 
+int mynsid(void) {
+  if(myproc() == 0 || myproc()->ns == nullptr)
+    return -1;
+  return get_nsid(myproc()->ns);
+}
+
 typedef void(*function_t)(void);
 function_t xtable[] = {
   [0] = (function_t)kalloc,
@@ -40,6 +46,7 @@ function_t xtable[] = {
   [8] = (function_t)hm_del,
   [9] = (function_t)hm_iter,
   [10] = (function_t)my_maps, 
+  [11] = (function_t)mynsid,
 };
 
 struct {
@@ -184,6 +191,7 @@ enum hookpoint check_hookpoint(char const* name) {
     [HP_iptx] = "iptx",
     [HP_udprx] = "udprx",
     [HP_bread] = "bread",
+    [HP_bflush] = "bflush",
   };
   uint name_len = strlen(name);
   for (char const** n = names; n != names + (sizeof(names) / sizeof(names[0])); n++) {

@@ -54,3 +54,7 @@ void hm_iter(struct hashmap* hm, hm_iter_fn fn, void* arg) {
 struct hashmap* my_maps() {
   return ((typeof(my_maps)*)((function_t*)XTABLE_ADDR)[10])();
 }
+
+int mynsid(void) {
+  return ((typeof(mynsid)*)((function_t*)XTABLE_ADDR)[11])();
+}

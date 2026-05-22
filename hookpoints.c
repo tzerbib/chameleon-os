@@ -14,6 +14,7 @@ HPLABELS(iprx)
 HPLABELS(iptx)
 HPLABELS(udprx)
 HPLABELS(bread)
+HPLABELS(bflush)
 
 #define HPTENTRY(name)\
   [HP_##name] = {\
@@ -32,4 +33,5 @@ struct hpt_entry hptable[] = {
   HPTENTRY(iptx),
   HPTENTRY(udprx),
   HPTENTRY(bread),
+  HPTENTRY(bflush),
 };

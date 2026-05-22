@@ -11,5 +11,6 @@ enum hookpoint {
   HP_iptx,
   HP_udprx,
   HP_bread,
+  HP_bflush,
   HP_none,
 };

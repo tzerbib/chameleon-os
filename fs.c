@@ -34,7 +34,7 @@ readsb(int dev, struct superblock *sb)
   // note: called from iinit, before any process exists
   struct buf *bp;
 
-  bp = bread_ns(dev, 1);
+  bp = bread_ns(dev, 1, 0);
 
   memmove(sb, bp->data, sizeof(*sb));
 
@@ -46,7 +46,7 @@ bzero(int dev, int bno)
 {
   struct buf *bp;
 
-  bp = bread_ns(dev, bno);
+  bp = bread_ns(dev, bno, 0);
 
   memset(bp->data, 0, BSIZE);
   log_write(bp);
@@ -67,7 +67,7 @@ balloc(uint dev)
   bp = 0;
   for(b = 0; b < sb.size; b += BPB){
 
-    bp = bread_ns(dev, BBLOCK(b, sb));
+    bp = bread_ns(dev, BBLOCK(b, sb), 0);
     
     for(bi = 0; bi < BPB && b + bi < sb.size; bi++){
       m = 1 << (bi % 8);
@@ -93,7 +93,7 @@ bfree(int dev, uint b)
   struct buf *bp;
   int bi, m;
 
-  bp = bread_ns(dev, BBLOCK(b, sb));
+  bp = bread_ns(dev, BBLOCK(b, sb), 0);
 
   bi = b % BPB;
   m = 1 << (bi % 8);
@@ -211,7 +211,7 @@ ialloc(uint dev, short type)
   struct dinode *dip;
 
   for(inum = 1; inum < sb.ninodes; inum++){
-    bp = bread_ns(dev, IBLOCK(inum, sb));
+    bp = bread_ns(dev, IBLOCK(inum, sb), 0);
     dip = (struct dinode*)bp->data + inum%IPB;
     if(dip->type == 0){  // a free inode
       memset(dip, 0, sizeof(*dip));
@@ -237,7 +237,7 @@ iupdate(struct inode *ip)
   struct buf *bp;
   struct dinode *dip;
 
-  bp = bread_ns(ip->dev, IBLOCK(ip->inum, sb));
+  bp = bread_ns(ip->dev, IBLOCK(ip->inum, sb), ip);
 
   dip = (struct dinode*)bp->data + ip->inum%IPB;
   dip->type = ip->type;
@@ -312,7 +312,7 @@ ilock(struct inode *ip)
   acquiresleep(&ip->lock);
 
   if(ip->valid == 0){
-    bp = bread_ns(ip->dev, IBLOCK(ip->inum, sb));
+    bp = bread_ns(ip->dev, IBLOCK(ip->inum, sb), ip);
 
     dip = (struct dinode*)bp->data + ip->inum%IPB;
     ip->type = dip->type;
@@ -406,7 +406,7 @@ bmap(struct inode *ip, uint bn)
     if((addr = ip->addrs[NDIRECT]) == 0)
       ip->addrs[NDIRECT] = addr = balloc(ip->dev);
 
-    bp = bread_ns(ip->dev, addr);
+    bp = bread_ns(ip->dev, addr, ip);
 
     a = (uint*)bp->data;
     if((addr = a[bn]) == 0){
@@ -441,7 +441,7 @@ itrunc(struct inode *ip)
 
   if(ip->addrs[NDIRECT]){
 
-    bp = bread_ns(ip->dev, ip->addrs[NDIRECT]);
+    bp = bread_ns(ip->dev, ip->addrs[NDIRECT], ip);
 
 
     a = (uint*)bp->data;
@@ -492,8 +492,8 @@ readi(struct inode *ip, char *dst, uint off, uint n)
 
   for(tot=0; tot<n; tot+=m, off+=m, dst+=m){
 
-    bp = bread_ns(ip->dev, bmap(ip, off/BSIZE));
-    bp->inode = ip; 
+    bp = bread_ns(ip->dev, bmap(ip, off/BSIZE), ip);
+    // bp->inode = ip; 
 
     m = min(n - tot, BSIZE - off%BSIZE);
     memmove(dst, bp->data + off%BSIZE, m);
@@ -524,8 +524,8 @@ writei(struct inode *ip, char *src, uint off, uint n)
 
   for(tot=0; tot<n; tot+=m, off+=m, src+=m){
 
-    bp = bread_ns(ip->dev, bmap(ip, off/BSIZE));
-    bp->inode = ip; 
+    bp = bread_ns(ip->dev, bmap(ip, off/BSIZE), ip);
+    // bp->inode = ip; 
 
     m = min(n - tot, BSIZE - off%BSIZE);
     memmove(bp->data + off%BSIZE, src, m);

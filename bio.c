@@ -53,8 +53,6 @@ binit(void)
     b->next = bcache.head.next;
     b->prev = &bcache.head;
 
-    b->nsids = 0; // zero out nsids
-
     initsleeplock(&b->lock, "buffer");
     bcache.head.next->prev = b;
     bcache.head.next = b;
@@ -86,16 +84,14 @@ bget(uint dev, uint blockno)
   // because log.c has modified it but not yet committed it.
   for(b = bcache.head.prev; b != &bcache.head; b = b->prev){
     if(b->refcnt == 0 && (b->flags & B_DIRTY) == 0) {
-
+      //cprintf("bget hi\n");
+      EXT_HP_NOPS(bflush); 
+      //cprintf("bget bye\n");
       b->dev = dev;
       b->blockno = blockno;
       b->flags = 0;
       b->refcnt = 1;
-
-      b->nsids = 0; // zero out of the nsids slice TODO: delete this
-
       b->inode = NULL; 
-
       release(&bcache.lock);
       acquiresleep(&b->lock);
       return b;
@@ -159,7 +155,7 @@ brelse(struct buf *b)
 
 // read a block given nsid 
 struct buf*
-bread_ns(uint dev, uint blockno)
+bread_ns(uint dev, uint blockno, struct inode *ip)
 {
   
     int nsid = get_nsid(myproc()->ns); 
@@ -174,6 +170,10 @@ bread_ns(uint dev, uint blockno)
     }
 
     struct buf *b = bget(dev, blockno);
+    if (ip != 0){
+      b->inode = ip;
+    }
+
     // NOTE: adding any code in between will break context building
     EXT_HP_NOPS(bread);
 
@@ -183,7 +183,6 @@ bread_ns(uint dev, uint blockno)
 
 
     acquire(&bcache.lock);
-    BUF_SET_NSID(b, nsid); 
     release(&bcache.lock);
 
     return b;
