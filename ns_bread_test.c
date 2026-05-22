@@ -4,11 +4,11 @@
 #include "fcntl.h"
 
 void test_bread_attribution(void) {
-    char buf1[512];
-    char buf2[512];
-    char buf3[512];
+    char buf1[1024];
+    char buf2[1024];
+    char buf3[1024];
 
-    // nsid 1 opens and reads file
+    // nsid 0 opens and reads file
     printf(1, "in ns %d\n", getnsid());
 
     // attach bread extension 

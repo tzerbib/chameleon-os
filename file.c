@@ -78,7 +78,7 @@ fileclose(struct file *f)
     begin_op();
 
     int nsid = get_nsid(myproc()->ns);
-    if(nsid >= 0){
+    if(get_ns(nsid) != nullptr){
         acquiresleep(&ff.ip->lock);
         inode_ns_close(ff.ip, nsid);
         releasesleep(&ff.ip->lock);

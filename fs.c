@@ -34,7 +34,7 @@ readsb(int dev, struct superblock *sb)
   // note: called from iinit, before any process exists
   struct buf *bp;
 
-  bp = bread_ns(dev, 1, 0);
+  bp = bread_ns(dev, 1, nullptr);
 
   memmove(sb, bp->data, sizeof(*sb));
 
@@ -46,7 +46,7 @@ bzero(int dev, int bno)
 {
   struct buf *bp;
 
-  bp = bread_ns(dev, bno, 0);
+  bp = bread_ns(dev, bno, nullptr);
 
   memset(bp->data, 0, BSIZE);
   log_write(bp);
@@ -67,7 +67,7 @@ balloc(uint dev)
   bp = 0;
   for(b = 0; b < sb.size; b += BPB){
 
-    bp = bread_ns(dev, BBLOCK(b, sb), 0);
+    bp = bread_ns(dev, BBLOCK(b, sb), nullptr);
     
     for(bi = 0; bi < BPB && b + bi < sb.size; bi++){
       m = 1 << (bi % 8);
@@ -93,7 +93,7 @@ bfree(int dev, uint b)
   struct buf *bp;
   int bi, m;
 
-  bp = bread_ns(dev, BBLOCK(b, sb), 0);
+  bp = bread_ns(dev, BBLOCK(b, sb), nullptr);
 
   bi = b % BPB;
   m = 1 << (bi % 8);
@@ -211,7 +211,7 @@ ialloc(uint dev, short type)
   struct dinode *dip;
 
   for(inum = 1; inum < sb.ninodes; inum++){
-    bp = bread_ns(dev, IBLOCK(inum, sb), 0);
+    bp = bread_ns(dev, IBLOCK(inum, sb), nullptr);
     dip = (struct dinode*)bp->data + inum%IPB;
     if(dip->type == 0){  // a free inode
       memset(dip, 0, sizeof(*dip));
@@ -493,7 +493,6 @@ readi(struct inode *ip, char *dst, uint off, uint n)
   for(tot=0; tot<n; tot+=m, off+=m, dst+=m){
 
     bp = bread_ns(ip->dev, bmap(ip, off/BSIZE), ip);
-    // bp->inode = ip; 
 
     m = min(n - tot, BSIZE - off%BSIZE);
     memmove(dst, bp->data + off%BSIZE, m);

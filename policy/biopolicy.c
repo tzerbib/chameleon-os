@@ -26,7 +26,7 @@ static struct attribution biopolicy_get(struct biopolicy const* this, struct ext
   
   const struct buf *b = ctx->bio.buf;
 
-  //cprintf("1biopolicy: blockno=%d inode=%p\n", b->blockno, b->inode);
+  // cprintf("1biopolicy: blockno=%d inode=%p\n", b->blockno, b->inode);
   if (b->inode != nullptr) {
     // cprintf("2biopolicy: ns_opencounts[0]=%d ns_opencounts[1]=%d\n",
     //     b->inode->ns_opencounts[0],
