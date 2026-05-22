@@ -170,7 +170,7 @@ bread_ns(uint dev, uint blockno, struct inode *ip)
     }
 
     struct buf *b = bget(dev, blockno);
-    if (ip != 0){
+    if (ip != nullptr){
       b->inode = ip;
     }
 
