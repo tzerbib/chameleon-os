@@ -11,6 +11,7 @@
 #include "ethernet_vlan.h"
 #include "policies.h"
 
+int current_triggering_nsid = -1;
 
 uint check_arity(enum hookpoint hp) {
   switch (hp) {
@@ -153,6 +154,7 @@ enum hookpoint find_hp_by_addr(unsigned char const* addr) {
             continue;\
           }\
           /* TODO: the following needs to get changed to passing in context */\
+          current_triggering_nsid = i;\
           EXPAND(BUILD_ARGS_GENERIC(arity));\
         }\
         /* release(&ns->lock); */\

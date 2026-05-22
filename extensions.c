@@ -33,6 +33,10 @@ int mynsid(void) {
   return get_nsid(myproc()->ns);
 }
 
+int get_triggering_nsid(void) {
+    return current_triggering_nsid;
+}
+
 typedef void(*function_t)(void);
 function_t xtable[] = {
   [0] = (function_t)kalloc,
@@ -47,6 +51,7 @@ function_t xtable[] = {
   [9] = (function_t)hm_iter,
   [10] = (function_t)my_maps, 
   [11] = (function_t)mynsid,
+  [12] = (function_t)get_triggering_nsid,
 };
 
 struct {

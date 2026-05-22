@@ -8,3 +8,5 @@ struct trampoline_call {
 };
 
 void trampoline_call_for(enum hookpoint, struct trampoline_call*);
+
+extern int current_triggering_nsid;

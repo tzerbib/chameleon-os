@@ -58,3 +58,7 @@ struct hashmap* my_maps() {
 int mynsid(void) {
   return ((typeof(mynsid)*)((function_t*)XTABLE_ADDR)[11])();
 }
+
+int get_triggering_nsid(void){
+  return ((typeof(get_triggering_nsid)*)((function_t*)XTABLE_ADDR)[12])();
+}

@@ -318,7 +318,7 @@ sys_open(void)
 
   // update inode bitmap 
   int nsid = get_nsid(myproc()->ns);
-  if (nsid >= 0){
+  if (get_ns(nsid) != nullptr){
     inode_ns_open(ip, nsid); 
   }
 
