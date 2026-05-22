@@ -23,7 +23,7 @@ static enum domain domains[] = {
     [HP_iptx] = NET,
     [HP_udprx] = NET,
     [HP_bread] = BIO,
-    [HP_bflush] BIO,
+    [HP_bflush] = BIO,
 };
 
 static struct policy* policies[] = {
