@@ -26,7 +26,7 @@ static struct attribution biopolicy_get(struct biopolicy const* this, struct ext
   
   const struct buf *b = ctx->bio.buf;
   
-  if (b->inode != NULL) {
+  if (b->inode != nullptr) {
     // convert ns_opencounts array to bitmap
     for (int i = 0; i < N_NS; i++) {
       if (b->inode->ns_opencounts[i] > 0) {

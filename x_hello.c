@@ -7,19 +7,19 @@ int main(void) {
   
   chns(mkns());
 
-  struct extension *ebread;
-  if (extload("bread.ext", &ebread) != 0) {
-    return 1;
-  }
-  extattach(ebread);
-  printf(1, "bread.ext attached to ns %d\n", getnsid());
-
-  // struct extension *eflush;
-  // if (extload("flush.ext", &eflush) != 0) {
+  // struct extension *ebread;
+  // if (extload("bread.ext", &ebread) != 0) {
   //   return 1;
   // }
-  // extattach(eflush);
-  // printf(1, "flush.ext attached to ns %d\n", getnsid());
+  // extattach(ebread);
+  // printf(1, "bread.ext attached to ns %d\n", getnsid());
+
+  struct extension *eflush;
+  if (extload("flush.ext", &eflush) != 0) {
+    return 1;
+  }
+  extattach(eflush);
+  printf(1, "flush.ext attached to ns %d\n", getnsid());
 
   // struct extension *e1;
   // if (extload("x1.ext", &e1) != 0) {

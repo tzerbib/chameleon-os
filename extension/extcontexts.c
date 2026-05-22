@@ -24,7 +24,7 @@ static build_context_t* build_contexts_o0[] = {
   [HP_iprx] = nullptr,
   [HP_iptx] = nullptr,
   [HP_udprx] = nullptr,
-  [HP_bflush] = nullptr,
+  [HP_bflush] = &build_context_bflush,
 };
 
 // TODO: none of the following is implemented
