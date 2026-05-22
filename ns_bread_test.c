@@ -8,8 +8,6 @@ void test_bread_attribution(void) {
     char buf2[512];
     char buf3[512];
 
-    printf(1, "\nSTARTING TEST_BREAD_ATTRIBUTION\n");
-
     // nsid 1 opens and reads file
     printf(1, "in ns %d\n", getnsid());
 
@@ -59,9 +57,7 @@ void test_bread_attribution(void) {
     printf(1, "bread.ext attached to ns %d\n", getnsid());
 
     // nsid 2 opens and reads the same file 
-    // expected behavior:
-    // nsid 1 triggering ext fires (NS1 is the process doing the read)
-    // nsid 2 data attribution ext fires (NS0 has file open, inode backpointer set)
+    // expected behavior: nsid1 and nsid2 extensions fire
     int fd2 = open("README", O_RDONLY);
     if(fd2 < 0){
         printf(1, "nsid %d: readme open failed\n", getnsid());
@@ -72,35 +68,7 @@ void test_bread_attribution(void) {
     printf(1, "nsid %d: read %d bytes\n", getnsid(), bytes_read1);
     close(fd2);
 
-    // // --- switch back to NS0 and close fd ---
-    // // after this, ns_opencounts[0] should go to 0
-    // // NS0's data attribution ext should no longer fire
-    // if(chns(0) < 0){
-    //     printf(1, "chns back to ns0 failed\n");
-    //     return;
-    // }
-    // printf(1, "switched back to nsid %d\n", getnsid());
-    // close(fd1);
-    // printf(1, "ns0: closed fd, ns_opencounts[0] should now be 0\n");
-
-    // // --- NS0 reads again after closing ---
-    // // NS0's data attribution ext should NOT fire now
-    // // since ns_opencounts[0] == 0
-    // if(chns(nsid2) < 0){
-    //     printf(1, "chns failed\n");
-    //     return;
-    // }
-    // printf(1, "ns%d: reading after ns0 closed file\n", getnsid());
-    // int fd2 = open("README", O_RDONLY);
-    // if(fd2 < 0){
-    //     printf(1, "ns%d: failed to open README\n", getnsid());
-    //     return;
-    // }
-    // int bytes_read2 = read(fd2, buf2, sizeof(buf2));
-    // printf(1, "ns%d: read %d bytes\n", getnsid(), bytes_read2);
-    // close(fd2);
-
-    printf(1, "TEST_BREAD_ATTRIBUTION DONE\n");
+    printf(1, "test_bread_attribution done\n");
 }
 
 int
