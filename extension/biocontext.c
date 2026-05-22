@@ -6,7 +6,7 @@
 #include "minidisas.h"
 #include "proc.h"
 
-#define OFFSET_TO_MOV 0x15
+#define OFFSET_TO_MOV 0x9
 
 // This only works under -O0
 // This also assumes that the value grabbed is a ptr?
