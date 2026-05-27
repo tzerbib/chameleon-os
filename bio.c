@@ -84,7 +84,11 @@ bget(uint dev, uint blockno)
   // because log.c has modified it but not yet committed it.
   for(b = bcache.head.prev; b != &bcache.head; b = b->prev){
     if(b->refcnt == 0 && (b->flags & B_DIRTY) == 0) {
+      //cprintf("hi\n");
+      volatile struct buf* bflush_buf = b;  // TODO: forces onto stack via eax (only works for o0)
+      (void)bflush_buf;
       EXT_HP_NOPS(bflush); 
+      // cprintf("bye\n");
 
       b->dev = dev;
       b->blockno = blockno;
