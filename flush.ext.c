@@ -7,10 +7,8 @@
 
 // Fires when a block is evicted from the buffer cache
 int EXT_ENTRY_RO(bflush, struct biocontext const* ctx) {
-    xputs("hello from bflush! blockno: ");
-    xputd(ctx->buf->blockno);
-    xputs(" inode=");
-    xputd((int)ctx->buf->inode);
+    xputs("hello from bflush! nsid: ");
+    xputd(get_triggering_nsid());
     xputs("\n");
     return 0;
 }
