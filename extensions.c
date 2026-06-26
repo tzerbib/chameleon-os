@@ -94,7 +94,7 @@ struct extension* ext_load(char* path) {
   // This call updates n_ext
   kload_elf(path, &n_ext, ep);
 
-  cprintf("entry is at %p\n", ep->entry);
+  // cprintf("entry is at %p\n", ep->entry);
 
   return ep;
 }
@@ -103,7 +103,7 @@ void ext_attach(struct extension* e) {
   acquire(&exttable.lock);
 
   enum hookpoint hp = e->hp;
-  cprintf("attach, hp %d\n", hp);
+  // cprintf("attach, hp %d\n", hp);
   unsigned char* hp_start = hptable[hp].start;
   unsigned char* hp_end = hptable[hp].end;
 
